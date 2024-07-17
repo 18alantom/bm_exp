@@ -1,23 +1,16 @@
 package main
 
-type BenchConfig struct {
-	Target string
-	Apps   []App
-}
-type App struct {
-	User string
-	Repo string
-}
+import "test/bm_poc/bm"
 
-func GetBenchConfig() BenchConfig {
-	return BenchConfig{
-		Target: "/Users/alan/Desktop/code/test_go/bm_poc/bench",
-		Apps: []App{
-			{"frappe", "erpnext"},
-			{"frappe", "hrms"},
-			{"frappe", "gameplan"},
-			{"frappe", "builder"},
-			{"frappe", "drive"},
+func GetBenchConfig() bm.Config {
+	return bm.Config{
+		Apps: []bm.App{
+			{User: "frappe", Repo: "frappe", Branch: "develop"},
+			{User: "frappe", Repo: "erpnext", Branch: "develop"},
+			{User: "frappe", Repo: "hrms", Branch: "develop"},
+			{User: "frappe", Repo: "gameplan", Branch: "main"},
+			{User: "frappe", Repo: "builder", Branch: "develop"},
+			{User: "frappe", Repo: "drive", Branch: "main"},
 		},
 	}
 }
