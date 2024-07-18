@@ -5,7 +5,6 @@ import (
 )
 
 // TODO: Compose sequential and concurrent stages
-// TODO: Debug why not all expected output is being printed
 
 func fetchRepo(app App, out Out) {
 	stub := fmt.Sprintf("%s/%s", app.User, app.Repo)

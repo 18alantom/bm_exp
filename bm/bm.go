@@ -41,30 +41,36 @@ func (bm *BM) merge(outs []Out) {
 	mux := make(chan string, 1024)
 
 	var wg sync.WaitGroup
-	wg.Add(len(outs))
+	wg.Add(len(bm.Config.Apps))
 
-	for _, out := range outs {
-		go func() {
-			for {
-				select {
-				case output := <-out.Output:
-					mux <- fmt.Sprintf("\x1b[33m%s\x1b[m(\x1b[34m%s\x1b[m) :: %s\r\n", output.Stage, out.App, output.Data)
-				case <-out.Done:
-					wg.Done()
-					return
-				}
+	getOutput := func(out Out) {
+		for {
+			select {
+			case output := <-out.Output:
+				mux <- fmt.Sprintf("\x1b[33m%s\x1b[m(\x1b[34m%s\x1b[m) :: %s\r\n", output.Stage, out.App, output.Data)
+			case <-out.Done:
+				wg.Done()
+				return
 			}
-		}()
+		}
 	}
 
+	for _, out := range outs {
+		go getOutput(out)
+	}
+
+	var wgMux sync.WaitGroup
+	wgMux.Add(1)
 	go func() {
 		for output := range mux {
 			fmt.Print(output)
 		}
+		wgMux.Done()
 	}()
 
 	wg.Wait()
 	close(mux)
+	wgMux.Wait()
 }
 
 // func (bm *BM) installJS(app App) {}
