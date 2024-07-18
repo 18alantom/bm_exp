@@ -1,11 +1,13 @@
 package bm
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
 
 type Stage string
+type Action func(app App, out Out)
 
 type Config struct {
 	Apps []App
@@ -15,6 +17,10 @@ type App struct {
 	User   string
 	Repo   string
 	Branch string
+}
+
+func (app *App) Name() string {
+	return fmt.Sprintf("%s/%s", app.User, app.Repo)
 }
 
 const (

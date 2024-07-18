@@ -3,6 +3,7 @@ package bm
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type BM struct {
@@ -11,85 +12,29 @@ type BM struct {
 	Config Config
 }
 
-type Output struct {
-	Data  string
-	Stage Stage
-}
-
-// Used for multiplexing output
-type Out struct {
-	Output chan Output
-	Done   chan struct{}
-	App    string
-}
-
 func (bm *BM) SetupBench() {
-	outs := bm.getOuts()
-	defer bm.merge(outs)
-
-	// Not structured concurrency
-	bm.getRepos(outs)
-}
-
-func (bm *BM) getRepos(outs []Out) {
-	for i, app := range bm.Config.Apps {
-		go fetchRepo(app, outs[i])
-	}
-}
-
-func (bm *BM) merge(outs []Out) {
-	mux := make(chan string, 1024)
-
 	var wg sync.WaitGroup
-	wg.Add(len(bm.Config.Apps))
+	defer bm.wrapUp(&wg, time.Now())
 
-	getOutput := func(out Out) {
-		for {
-			select {
-			case output := <-out.Output:
-				mux <- fmt.Sprintf("\x1b[33m%s\x1b[m(\x1b[34m%s\x1b[m) :: %s\r\n", output.Stage, out.App, output.Data)
-			case <-out.Done:
-				wg.Done()
-				return
-			}
-		}
-	}
+	fmt.Println("\x1b[34;1mSetting up bench\x1b[m")
+	outs := getOuts(bm.Config.Apps)
 
-	for _, out := range outs {
-		go getOutput(out)
-	}
-
-	var wgMux sync.WaitGroup
-	wgMux.Add(1)
+	wg.Add(1)
 	go func() {
-		for output := range mux {
-			fmt.Print(output)
-		}
-		wgMux.Done()
+		bm.executeActions(outs, true)
+		wg.Done()
 	}()
 
-	wg.Wait()
-	close(mux)
-	wgMux.Wait()
+	wg.Add(1)
+	go func() {
+		merge(outs)
+		wg.Done()
+	}()
+
 }
 
-// func (bm *BM) installJS(app App) {}
-
-// func (bm *BM) buildJS(app App) {}
-
-// func (bm *BM) installPy(app App) {}
-
-// func mux() {}
-
-func (bm *BM) getOuts() []Out {
-	outs := make([]Out, len(bm.Config.Apps))
-	for i, app := range bm.Config.Apps {
-		outs[i] = Out{
-			Output: make(chan Output),
-			Done:   make(chan struct{}),
-			App:    fmt.Sprintf("%s/%s", app.User, app.Repo),
-		}
-	}
-
-	return outs
+func (bm *BM) wrapUp(wg *sync.WaitGroup, start time.Time) {
+	wg.Wait()
+	fmt.Println("\x1b[32;1mBench setup completed\x1b[m")
+	fmt.Printf("%d apps installed in %.3fs\n", len(bm.Config.Apps), time.Since(start).Seconds())
 }

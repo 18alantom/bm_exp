@@ -4,48 +4,42 @@ import (
 	"fmt"
 )
 
-// TODO: Compose sequential and concurrent stages
-
 func fetchRepo(app App, out Out) {
-	stub := fmt.Sprintf("%s/%s", app.User, app.Repo)
-
 	RandSleep(1000)
 	out.Output <- Output{
-		Data:  fmt.Sprintf("Fetching %s", stub),
+		Data:  fmt.Sprintf("Fetching %s", app.Name()),
 		Stage: FetchRepo,
 	}
+}
 
+func validate(app App, out Out) {
 	RandSleep(1000)
 	out.Output <- Output{
-		Data:  fmt.Sprintf("Done fetching %s", stub),
-		Stage: FetchRepo,
+		Data:  fmt.Sprintf("Validating %s", app.Name()),
+		Stage: Validate,
 	}
-
-	complete(app, out)
 }
 
 func installJS(app App, out Out) {
-	stub := fmt.Sprintf("%s/%s", app.User, app.Repo)
-
 	RandSleep(1000)
 	out.Output <- Output{
-		Data:  fmt.Sprintf("Installing JS dependencies %s", stub),
+		Data:  fmt.Sprintf("Installing JS dependencies %s", app.Name()),
 		Stage: InstallJS,
 	}
+}
 
+func buildFrontend(app App, out Out) {
 	RandSleep(1000)
 	out.Output <- Output{
-		Data:  fmt.Sprintf("Building frontend %s", stub),
+		Data:  fmt.Sprintf("Building frontend %s", app.Name()),
 		Stage: BuildFrontend,
 	}
 }
 
 func installPy(app App, out Out) {
-	stub := fmt.Sprintf("%s/%s", app.User, app.Repo)
-
 	RandSleep(1000)
 	out.Output <- Output{
-		Data:  fmt.Sprintf("Installing Python dependencies %s", stub),
+		Data:  fmt.Sprintf("Installing Python dependencies %s", app.Name()),
 		Stage: InstallPy,
 	}
 }
