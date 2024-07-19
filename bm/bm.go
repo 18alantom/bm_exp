@@ -21,7 +21,7 @@ func (bm *BM) SetupBench() {
 
 	wg.Add(1)
 	go func() {
-		bm.executeActions(outs, true)
+		Execute(bm.Config.Apps, outs, true)
 		wg.Done()
 	}()
 
@@ -30,11 +30,10 @@ func (bm *BM) SetupBench() {
 		merge(outs)
 		wg.Done()
 	}()
-
 }
 
 func (bm *BM) wrapUp(wg *sync.WaitGroup, start time.Time) {
 	wg.Wait()
-	fmt.Println("\x1b[32;1mBench setup completed\x1b[m")
+	fmt.Println("\x1b[32;1mBench setup Completedd\x1b[m")
 	fmt.Printf("%d apps installed in %.3fs\n", len(bm.Config.Apps), time.Since(start).Seconds())
 }

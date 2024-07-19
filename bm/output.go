@@ -55,7 +55,9 @@ func merge(outs []Out) {
 		InstallJS:     Purple,
 		BuildFrontend: Magenta,
 		InstallPy:     Cyan,
-		Complete:      Green,
+		Completed:      Green,
+		Stopped:       Yellow,
+		Errored:       Red,
 	}
 
 	getOutput := func(out Out) {
