@@ -13,15 +13,26 @@ type BM struct {
 }
 
 func (bm *BM) SetupBench() {
-	var wg sync.WaitGroup
-	defer bm.wrapUp(&wg, time.Now())
-
 	fmt.Println("\x1b[34;1mSetting up bench\x1b[m")
+	start := time.Now()
 	outs := getOuts(bm.Config.Apps)
+
+	err_strs := make([]string, 0)
+	err_chan := make(chan string, len(bm.Config.Apps))
+
+	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
-		Execute(bm.Config.Apps, outs, true)
+		for err := range err_chan {
+			err_strs = append(err_strs, err)
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		Execute(bm.Config.Apps, outs, err_chan, true)
 		wg.Done()
 	}()
 
@@ -30,10 +41,21 @@ func (bm *BM) SetupBench() {
 		merge(outs)
 		wg.Done()
 	}()
+
+	wg.Wait()
+	bm.wrapUp(err_strs, start)
 }
 
-func (bm *BM) wrapUp(wg *sync.WaitGroup, start time.Time) {
-	wg.Wait()
-	fmt.Println("\x1b[32;1mBench setup Completedd\x1b[m")
-	fmt.Printf("%d apps installed in %.3fs\n", len(bm.Config.Apps), time.Since(start).Seconds())
+func (bm *BM) wrapUp(errs []string, start time.Time) {
+	end := time.Since(start).Seconds()
+	if len(errs) > 0 {
+		fmt.Println("\x1b[31;1mBench setup failed\x1b[m")
+		for _, err := range errs {
+			fmt.Printf("- %s\n", err)
+		}
+		fmt.Printf("Time taken %.3fs\n", end)
+	} else {
+		fmt.Println("\x1b[32;1mBench setup succeeded\x1b[m")
+		fmt.Printf("%d apps installed in %.3fs\n", len(bm.Config.Apps), end)
+	}
 }

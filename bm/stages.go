@@ -14,7 +14,7 @@ const (
 	InstallJS     Stage = "InstallJSDependencies"
 	BuildFrontend Stage = "BuildFrontend"
 	InstallPy     Stage = "InstallPythonDependencies"
-	Completed      Stage = "Completed"
+	Completed     Stage = "Completed"
 	Stopped       Stage = "Stopped"
 	Errored       Stage = "Errored"
 )
@@ -74,14 +74,16 @@ func completed(app App, out Out) error {
 		Data:  fmt.Sprintf("Installation Completed %s", app.Name()),
 		Stage: Completed,
 	}
+
 	return nil
 }
 
-func errored(app App, out Out) error {
+func errored(app App, out Out, msg string) error {
 	out.Output <- Output{
-		Data:  fmt.Sprintf("App errored out %s", app.Name()),
+		Data:  fmt.Sprintf("App %s error: %s", app.Name(), msg),
 		Stage: Errored,
 	}
+
 	return nil
 }
 
@@ -90,5 +92,6 @@ func stopped(app App, out Out) error {
 		Data:  fmt.Sprintf("App installation stopped %s", app.Name()),
 		Stage: Stopped,
 	}
+
 	return nil
 }

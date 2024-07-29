@@ -1,25 +1,16 @@
 package bm
 
 import (
+	"fmt"
 	"sync"
-	"time"
 )
 
-// TODO:
-// - [ ] On Error out bench setup failed message
-// - [ ] Aggregate errors and return to the calling process
-
-func Execute(apps []App, outs []Out, concurrently bool) {
+func Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
 	stop := NewStop()
 
+	defer close(err_chan)
 	defer done(outs)
 	defer stop.stop()
-
-	// TODO: Remove (used to check termination)
-	go func() {
-		time.Sleep(500 * time.Millisecond)
-		stop.stop()
-	}()
 
 	concurrentActions := []Action{
 		fetchRepo,
@@ -29,24 +20,24 @@ func Execute(apps []App, outs []Out, concurrently bool) {
 	}
 
 	if concurrently {
-		concurrentSequence(apps, outs, stop, concurrentActions)
+		concurrentSequence(apps, outs, err_chan, stop, concurrentActions)
 	} else {
-		sequentialSequence(apps, outs, stop, concurrentActions)
+		sequentialSequence(apps, outs, err_chan, stop, concurrentActions)
 	}
 
 	sequentialActions := []Action{
 		installPy,
 		completed,
 	}
-	sequentialSequence(apps, outs, stop, sequentialActions)
+	sequentialSequence(apps, outs, err_chan, stop, sequentialActions)
 }
 
-func concurrentSequence(apps []App, outs []Out, stop *Stop, actions []Action) {
+func concurrentSequence(apps []App, outs []Out, err_chan chan string, stop *Stop, actions []Action) {
 	var wg sync.WaitGroup
 	wg.Add(len(apps))
 
 	runSequential := func(app App, out Out, actions []Action) {
-		sequential(app, out, stop, actions)
+		sequential(app, out, err_chan, stop, actions)
 		wg.Done()
 	}
 
@@ -56,11 +47,11 @@ func concurrentSequence(apps []App, outs []Out, stop *Stop, actions []Action) {
 	wg.Wait()
 }
 
-func sequentialSequence(apps []App, outs []Out, stop *Stop, actions []Action) error {
+func sequentialSequence(apps []App, outs []Out, err_chan chan string, stop *Stop, actions []Action) error {
 	for i, app := range apps {
 		out := outs[i]
 
-		if err := sequential(app, out, stop, actions); err != nil {
+		if err := sequential(app, out, err_chan, stop, actions); err != nil {
 			return err
 		}
 
@@ -72,7 +63,7 @@ func sequentialSequence(apps []App, outs []Out, stop *Stop, actions []Action) er
 	return nil
 }
 
-func sequential(app App, out Out, stop *Stop, actions []Action) error {
+func sequential(app App, out Out, err_chan chan string, stop *Stop, actions []Action) error {
 	for _, action := range actions {
 		if stop.Stopped() {
 			stopped(app, out)
@@ -80,8 +71,9 @@ func sequential(app App, out Out, stop *Stop, actions []Action) error {
 		}
 
 		if err := action(app, out); err != nil {
-			errored(app, out)
+			errored(app, out, err.Error())
 			stop.stop()
+			err_chan <- fmt.Sprintf("%s :: %s", app.Name(), err.Error())
 			return err
 		}
 	}
