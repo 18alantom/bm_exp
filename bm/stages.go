@@ -19,16 +19,6 @@ const (
 	Errored       Stage = "Errored"
 )
 
-func fetchRepo(app App, out Out) error {
-	RandSleep(1000)
-	out.Output <- Output{
-		Data:  fmt.Sprintf("Fetching %s", app.Name()),
-		Stage: FetchRepo,
-	}
-
-	return nil
-}
-
 func validate(app App, out Out) error {
 	RandSleep(1000)
 	out.Output <- Output{

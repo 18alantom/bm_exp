@@ -5,6 +5,9 @@ import (
 	"sync"
 )
 
+// TODO:
+// - Measure per stage timing
+
 func Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
 	stop := NewStop()
 
