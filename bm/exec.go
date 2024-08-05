@@ -5,15 +5,27 @@ import (
 	"sync"
 )
 
+type Exec struct {
+	Ctx Context
+
+	apps     []App
+	outs     []Out
+	stop     *Stop
+	err_chan chan string
+}
+
 // TODO:
 // - Measure per stage timing
 
-func Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
-	stop := NewStop()
+func (exec *Exec) Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
+	exec.apps = apps
+	exec.outs = outs
+	exec.stop = NewStop()
+	exec.err_chan = err_chan
 
-	defer close(err_chan)
-	defer done(outs)
-	defer stop.stop()
+	defer close(exec.err_chan)
+	defer exec.done()
+	defer exec.stop.stop()
 
 	concurrentActions := []Action{
 		fetchRepo,
@@ -23,42 +35,42 @@ func Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
 	}
 
 	if concurrently {
-		concurrentSequence(apps, outs, err_chan, stop, concurrentActions)
+		exec.concurrentSequence(concurrentActions)
 	} else {
-		sequentialSequence(apps, outs, err_chan, stop, concurrentActions)
+		exec.sequentialSequence(concurrentActions)
 	}
 
 	sequentialActions := []Action{
 		installPy,
 		completed,
 	}
-	sequentialSequence(apps, outs, err_chan, stop, sequentialActions)
+	exec.sequentialSequence(sequentialActions)
 }
 
-func concurrentSequence(apps []App, outs []Out, err_chan chan string, stop *Stop, actions []Action) {
+func (exec *Exec) concurrentSequence(actions []Action) {
 	var wg sync.WaitGroup
-	wg.Add(len(apps))
+	wg.Add(len(exec.apps))
 
 	runSequential := func(app App, out Out, actions []Action) {
-		sequential(app, out, err_chan, stop, actions)
+		exec.sequential(app, out, actions)
 		wg.Done()
 	}
 
-	for i, app := range apps {
-		go runSequential(app, outs[i], actions)
+	for i, app := range exec.apps {
+		go runSequential(app, exec.outs[i], actions)
 	}
 	wg.Wait()
 }
 
-func sequentialSequence(apps []App, outs []Out, err_chan chan string, stop *Stop, actions []Action) error {
-	for i, app := range apps {
-		out := outs[i]
+func (exec *Exec) sequentialSequence(actions []Action) error {
+	for i, app := range exec.apps {
+		out := exec.outs[i]
 
-		if err := sequential(app, out, err_chan, stop, actions); err != nil {
+		if err := exec.sequential(app, out, actions); err != nil {
 			return err
 		}
 
-		if stop.Stopped() {
+		if exec.stop.Stopped() {
 			return nil
 		}
 	}
@@ -66,17 +78,17 @@ func sequentialSequence(apps []App, outs []Out, err_chan chan string, stop *Stop
 	return nil
 }
 
-func sequential(app App, out Out, err_chan chan string, stop *Stop, actions []Action) error {
+func (exec *Exec) sequential(app App, out Out, actions []Action) error {
 	for _, action := range actions {
-		if stop.Stopped() {
-			stopped(app, out)
+		if exec.stop.Stopped() {
+			stopped(exec.Ctx, app, out)
 			return nil
 		}
 
-		if err := action(app, out); err != nil {
+		if err := action(exec.Ctx, app, out); err != nil {
 			errored(app, out, err.Error())
-			stop.stop()
-			err_chan <- fmt.Sprintf("%s :: %s", app.Name(), err.Error())
+			exec.stop.stop()
+			exec.err_chan <- fmt.Sprintf("%s :: %s", app.Name(), err.Error())
 			return err
 		}
 	}
@@ -84,8 +96,8 @@ func sequential(app App, out Out, err_chan chan string, stop *Stop, actions []Ac
 	return nil
 }
 
-func done(outs []Out) {
-	for _, out := range outs {
+func (exec *Exec) done() {
+	for _, out := range exec.outs {
 		out.Done <- struct{}{}
 		close(out.Output)
 		close(out.Done)

@@ -20,7 +20,8 @@ func (bm *BM) SetupBench() {
 	err_strs := make([]string, 0)
 	err_chan := make(chan string, len(bm.Config.Apps))
 
-	var wg sync.WaitGroup
+	wg := sync.WaitGroup{}
+	exec := Exec{Ctx: bm.context()}
 
 	wg.Add(1)
 	go func() {
@@ -32,7 +33,7 @@ func (bm *BM) SetupBench() {
 
 	wg.Add(1)
 	go func() {
-		Execute(bm.Config.Apps, outs, err_chan, true)
+		exec.Execute(bm.Config.Apps, outs, err_chan, true)
 		wg.Done()
 	}()
 
@@ -61,5 +62,12 @@ func (bm *BM) wrapUp(errs []string, start time.Time) {
 		for _, err := range errs {
 			fmt.Printf("- %s\n", err)
 		}
+	}
+}
+
+func (bm *BM) context() Context {
+	return Context{
+		Target: bm.Target,
+		Cache:  bm.Cache,
 	}
 }

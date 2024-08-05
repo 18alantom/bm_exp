@@ -6,7 +6,11 @@ import (
 
 // Each Stage is associated with an Action
 type Stage string
-type Action func(app App, out Out) error
+type Context struct {
+	Target string
+	Cache  string
+}
+type Action func(ctx Context, app App, out Out) error
 
 const (
 	FetchRepo     Stage = "FetchRepository"
@@ -19,7 +23,7 @@ const (
 	Errored       Stage = "Errored"
 )
 
-func validate(app App, out Out) error {
+func validate(ctx Context, app App, out Out) error {
 	RandSleep(1000)
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Validating %s", app.Name()),
@@ -29,7 +33,7 @@ func validate(app App, out Out) error {
 	return nil
 }
 
-func installJS(app App, out Out) error {
+func installJS(ctx Context, app App, out Out) error {
 	RandSleep(1000)
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Installing JS dependencies %s", app.Name()),
@@ -39,7 +43,7 @@ func installJS(app App, out Out) error {
 	return nil
 }
 
-func buildFrontend(app App, out Out) error {
+func buildFrontend(ctx Context, app App, out Out) error {
 	RandSleep(1000)
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Building frontend %s", app.Name()),
@@ -49,7 +53,7 @@ func buildFrontend(app App, out Out) error {
 	return nil
 }
 
-func installPy(app App, out Out) error {
+func installPy(ctx Context, app App, out Out) error {
 	RandSleep(1000)
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Installing Python dependencies %s", app.Name()),
@@ -59,7 +63,7 @@ func installPy(app App, out Out) error {
 	return nil
 }
 
-func completed(app App, out Out) error {
+func completed(ctx Context, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Installation Completed %s", app.Name()),
 		Stage: Completed,
@@ -77,7 +81,7 @@ func errored(app App, out Out, msg string) error {
 	return nil
 }
 
-func stopped(app App, out Out) error {
+func stopped(ctx Context, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("App installation stopped %s", app.Name()),
 		Stage: Stopped,
