@@ -6,13 +6,14 @@ import (
 	"time"
 )
 
+// TODO:
+// - Differentiate output between BM output and subcommand output
+
 type BM struct {
-	Target string
-	Cache  string
 	Config Config
 }
 
-func (bm *BM) SetupBench() {
+func (bm *BM) SetupBench(ctx Context) {
 	fmt.Println("\x1b[34;1mSetting up bench\x1b[m")
 	start := time.Now()
 	outs := getOuts(bm.Config.Apps)
@@ -21,7 +22,7 @@ func (bm *BM) SetupBench() {
 	err_chan := make(chan string, len(bm.Config.Apps))
 
 	wg := sync.WaitGroup{}
-	exec := Exec{Ctx: bm.context()}
+	exec := Exec{Ctx: ctx}
 
 	wg.Add(1)
 	go func() {
@@ -62,12 +63,5 @@ func (bm *BM) wrapUp(errs []string, start time.Time) {
 		for _, err := range errs {
 			fmt.Printf("- %s\n", err)
 		}
-	}
-}
-
-func (bm *BM) context() Context {
-	return Context{
-		Target: bm.Target,
-		Cache:  bm.Cache,
 	}
 }

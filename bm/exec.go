@@ -2,6 +2,7 @@ package bm
 
 import (
 	"fmt"
+	"os"
 	"sync"
 )
 
@@ -16,6 +17,8 @@ type Exec struct {
 
 // TODO:
 // - Measure per stage timing
+// - Cleanup on error
+// - Timestamp all outputs
 
 func (exec *Exec) Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
 	exec.apps = apps
@@ -27,6 +30,20 @@ func (exec *Exec) Execute(apps []App, outs []Out, err_chan chan string, concurre
 	defer exec.done()
 	defer exec.stop.stop()
 
+	if err := exec.initBench(); err != nil {
+		err_chan <- err.Error()
+		return
+	}
+
+	exec.executeActions(concurrently)
+}
+
+func (exec *Exec) initBench() error {
+	// TODO: Should probably be under BM, bm.go
+	return os.RemoveAll(exec.Ctx.Target)
+}
+
+func (exec *Exec) executeActions(concurrently bool) {
 	concurrentActions := []Action{
 		fetchRepo,
 		validate,

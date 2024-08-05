@@ -2,26 +2,87 @@ package bm
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"test/bm_poc/utils"
 )
 
 func fetchRepo(ctx Context, app App, out Out) error {
 	// TODO:
-	// - [ ] check if repo is present in cache
-	// - [ ] cache repo after cloning
-	// - [ ] fix git output capture
-	// - [ ] clone repo to correct destination
+	// - check if repo is present in cache
+	// - cache repo after cloning
+	// - fix git output capture
+	// - clone repo to correct destination
+	// - ownership?
 
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Fetching %s", app.Name()),
 		Stage: FetchRepo,
 	}
+	cachePath := getCachePath(ctx, app)
+	targetPath := getTargetPath(ctx, app)
 
-	// shell := Shell{Out: out.Output, Stage: FetchRepo}
-	// url := fmt.Sprintf("https://github.com/%s/%s", app.User, app.Repo)
-	// command := fmt.Sprintf("git clone %s --depth 1", url)
+	// Ensure repo exists in the cache folder
+	var err error = nil
+	if !hasCache(cachePath) {
+		if err = cloneRepo(app, out, cachePath); err != nil {
+			return err
+		}
+	}
+	if err != nil {
+		return err
+	}
 
-	// shell := Shell{Out: out.Output, Stage: FetchRepo}
-	// command := fmt.Sprintf("git clone %s --depth 1", app.Repo)
-	// return shell.Run(command)
+	// Make sure repo is at the target
+	if err = ensureTarget(cachePath, targetPath); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func cloneRepo(app App, out Out, cachePath string) error {
+	url := fmt.Sprintf("https://github.com/%s/%s", app.User, app.Repo)
+
+	// TODO: clone to cache or clone to target then copy to cache?
+	command := fmt.Sprintf("git clone %s --depth 1 %s", url, cachePath)
+	out.Output <- Output{
+		Data:  fmt.Sprintf("$ %s", command),
+		Stage: FetchRepo,
+	}
+
+	return Shell{Out: out.Output, Stage: FetchRepo}.Run(command)
+}
+
+func getCachePath(ctx Context, app App) string {
+	// TODO:
+	// - Cache path: $base/$user/$repo/${hash|branch|tag}?
+	return path.Join(ctx.Cache, app.User, app.Repo)
+}
+
+func getTargetPath(ctx Context, app App) string {
+	return path.Join(ctx.Target, "apps", app.Repo)
+}
+
+func hasCache(cachePath string) bool {
+	// TODO:
+	// - Use tar or something for caching
+	// - File locking?
+
+	stat, err := os.Stat(cachePath)
+	// TODO: Handle error properly, err doesn't always mean path doesn't exist
+	if err != nil {
+		return false
+	}
+
+	return stat.IsDir()
+}
+
+func ensureTarget(cachePath string, targetPath string) error {
+	if err := os.MkdirAll(targetPath, 0o755); err != nil {
+		return err
+	}
+
+	// TODO: run output that dir is being copied to target
+	return utils.CopyDir(cachePath, targetPath)
 }

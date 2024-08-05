@@ -9,10 +9,12 @@ func main() {
 }
 
 func run() {
-	bm := bm.BM{
-		Target: "/Users/alan/Desktop/code/test_go/bm_poc/bench",
-		Cache:  "/Users/alan/Desktop/code/test_go/bm_poc/.cache",
-		Config: GetBenchConfig(),
+	// TODO:
+	// - --no-cache [what]
+	maker := bm.BM{Config: GetBenchConfig()}
+	ctx := bm.Context{
+		Target: "/Users/alan/Desktop/code/test_go/bm_poc/temp/bench",
+		Cache:  "/Users/alan/Desktop/code/test_go/bm_poc/temp/.cache",
 	}
-	bm.SetupBench()
+	maker.SetupBench(ctx)
 }
