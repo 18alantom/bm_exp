@@ -33,26 +33,6 @@ func validate(ctx Context, app App, out Out) error {
 	return nil
 }
 
-func installJS(ctx Context, app App, out Out) error {
-	RandSleep(1000)
-	out.Output <- Output{
-		Data:  fmt.Sprintf("Installing JS dependencies %s", app.Name()),
-		Stage: InstallJS,
-	}
-
-	return nil
-}
-
-func buildFrontend(ctx Context, app App, out Out) error {
-	RandSleep(1000)
-	out.Output <- Output{
-		Data:  fmt.Sprintf("Building frontend %s", app.Name()),
-		Stage: BuildFrontend,
-	}
-
-	return nil
-}
-
 func installPy(ctx Context, app App, out Out) error {
 	RandSleep(1000)
 	out.Output <- Output{

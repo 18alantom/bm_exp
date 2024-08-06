@@ -34,7 +34,7 @@ func fetchRepo(ctx Context, app App, out Out) error {
 	}
 
 	// Make sure repo is at the target
-	if err = ensureTarget(cachePath, targetPath); err != nil {
+	if err = initializeTarget(cachePath, targetPath); err != nil {
 		return err
 	}
 
@@ -60,10 +60,6 @@ func getCachePath(ctx Context, app App) string {
 	return path.Join(ctx.Cache, app.User, app.Repo)
 }
 
-func getTargetPath(ctx Context, app App) string {
-	return path.Join(ctx.Target, "apps", app.Repo)
-}
-
 func hasCache(cachePath string) bool {
 	// TODO:
 	// - Use tar or something for caching
@@ -78,7 +74,7 @@ func hasCache(cachePath string) bool {
 	return stat.IsDir()
 }
 
-func ensureTarget(cachePath string, targetPath string) error {
+func initializeTarget(cachePath string, targetPath string) error {
 	if err := os.MkdirAll(targetPath, 0o755); err != nil {
 		return err
 	}

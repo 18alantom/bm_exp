@@ -17,8 +17,11 @@ type Exec struct {
 
 // TODO:
 // - Measure per stage timing
+// - Stage start and stage end message (whether stage failed)
+// - Put shell output message ($ ...) in shell.run itself
 // - Cleanup on error
 // - Timestamp all outputs
+// - App is not erroring out soon enough
 
 func (exec *Exec) Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
 	exec.apps = apps

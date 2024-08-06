@@ -2,6 +2,7 @@ package bm
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -55,7 +56,7 @@ func merge(outs []Out) {
 		InstallJS:     Purple,
 		BuildFrontend: Magenta,
 		InstallPy:     Cyan,
-		Completed:      Green,
+		Completed:     Green,
 		Stopped:       Yellow,
 		Errored:       Red,
 	}
@@ -64,11 +65,12 @@ func merge(outs []Out) {
 		for {
 			select {
 			case output := <-out.Output:
+				data := strings.TrimRight(output.Data, " \n\t\r")
 				mux <- fmt.Sprintf(
 					"%s%-26s\x1b[m \x1b[33m%-16s\x1b[m %s\r\n",
 					colorMap[output.Stage],
 					output.Stage,
-					out.App, output.Data,
+					out.App, data,
 				)
 			case <-out.Done:
 				wgOutput.Done()

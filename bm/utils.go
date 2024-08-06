@@ -3,6 +3,7 @@ package bm
 import (
 	"fmt"
 	"math/rand"
+	"path"
 	"time"
 )
 
@@ -25,4 +26,8 @@ func (app *App) Name() string {
 func RandSleep(max float64) {
 	duration := time.Duration(max*rand.Float64()) * time.Millisecond
 	time.Sleep(duration)
+}
+
+func getTargetPath(ctx Context, app App) string {
+	return path.Join(ctx.Target, "apps", app.Repo)
 }
