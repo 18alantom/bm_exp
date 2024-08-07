@@ -1,6 +1,7 @@
 package bm
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -8,32 +9,21 @@ import (
 	"path"
 )
 
-// TODO:
-// - handle non built apps
-// - handle apps that dont have a frontend
-
 func installJS(ctx Context, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Installing JS Dependencies for %s", app.Name()),
 		Stage: InstallJS,
 	}
 
-	targetPath := getTargetPath(ctx, app)
-	exists, err := ensureTarget(targetPath, "package.json")
-	if err != nil {
-		return err
-	}
+	appPath := GetAppPath(ctx, app)
 
-	if !exists {
+	_, err := readPackageJSON(appPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		// App doesn't have a frontend
 		return nil
 	}
 
-	command := fmt.Sprintf("yarn --cwd %s install", targetPath)
-	out.Output <- Output{
-		Data:  fmt.Sprintf("$ %s", command),
-		Stage: InstallJS,
-	}
-
+	command := fmt.Sprintf("yarn --cwd %s install", appPath)
 	return Shell{Out: out.Output, Stage: InstallJS}.Run(command)
 }
 
@@ -43,41 +33,31 @@ func buildFrontend(ctx Context, app App, out Out) error {
 		Stage: BuildFrontend,
 	}
 
-	targetPath := getTargetPath(ctx, app)
-	exists, err := ensureTarget(targetPath, "package.json")
+	appPath := GetAppPath(ctx, app)
+
+	pj, err := readPackageJSON(appPath)
+	if errors.Is(err, fs.ErrNotExist) || len(pj.Scripts.Build) == 0 {
+		// App doesn't have a frontend or doesn't need building
+		return nil
+	}
+
 	if err != nil {
 		return err
 	}
 
-	if !exists {
-		return nil
-	}
-
-	command := fmt.Sprintf("yarn --cwd %s build", targetPath)
-	out.Output <- Output{
-		Data:  fmt.Sprintf("$ %s", command),
-		Stage: BuildFrontend,
-	}
-
+	command := fmt.Sprintf("yarn --cwd %s build", appPath)
 	return Shell{Out: out.Output, Stage: BuildFrontend}.Run(command)
 }
 
-func ensureTarget(targetPath string, filename string) (bool, error) {
-	s, err := os.Stat(
-		path.Join(targetPath, filename),
-	)
+func readPackageJSON(appPath string) (PackageJSON, error) {
+	pjPath := path.Join(appPath, "package.json")
+	pj := PackageJSON{}
 
-	if errors.Is(err, fs.ErrNotExist) {
-		return false, nil
-	}
-
+	data, err := os.ReadFile(pjPath)
 	if err != nil {
-		return false, err
+		return pj, err
 	}
 
-	if s.Mode().IsRegular() {
-		return true, nil
-	}
-
-	return false, errors.New("not regular file")
+	json.Unmarshal(data, &pj)
+	return pj, nil
 }

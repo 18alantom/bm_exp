@@ -9,18 +9,15 @@ import (
 
 func fetchRepo(ctx Context, app App, out Out) error {
 	// TODO:
-	// - check if repo is present in cache
-	// - cache repo after cloning
 	// - fix git output capture
-	// - clone repo to correct destination
-	// - ownership?
+	// - repo uid, guid?
 
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Fetching %s", app.Name()),
 		Stage: FetchRepo,
 	}
 	cachePath := getCachePath(ctx, app)
-	targetPath := getTargetPath(ctx, app)
+	targetPath := GetAppPath(ctx, app)
 
 	// Ensure repo exists in the cache folder
 	var err error = nil
@@ -46,17 +43,11 @@ func cloneRepo(app App, out Out, cachePath string) error {
 
 	// TODO: clone to cache or clone to target then copy to cache?
 	command := fmt.Sprintf("git clone %s --depth 1 %s", url, cachePath)
-	out.Output <- Output{
-		Data:  fmt.Sprintf("$ %s", command),
-		Stage: FetchRepo,
-	}
-
 	return Shell{Out: out.Output, Stage: FetchRepo}.Run(command)
 }
 
 func getCachePath(ctx Context, app App) string {
-	// TODO:
-	// - Cache path: $base/$user/$repo/${hash|branch|tag}?
+	// TODO: Cache path should be `$base/$user/$repo/${hash|branch|tag}?`
 	return path.Join(ctx.Cache, app.User, app.Repo)
 }
 

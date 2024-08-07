@@ -2,7 +2,6 @@ package bm
 
 import (
 	"fmt"
-	"os"
 	"sync"
 )
 
@@ -39,11 +38,6 @@ func (exec *Exec) Execute(apps []App, outs []Out, err_chan chan string, concurre
 	}
 
 	exec.executeActions(concurrently)
-}
-
-func (exec *Exec) initBench() error {
-	// TODO: Should probably be under BM, bm.go
-	return os.RemoveAll(exec.Ctx.Target)
 }
 
 func (exec *Exec) executeActions(concurrently bool) {

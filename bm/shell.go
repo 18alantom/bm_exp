@@ -1,6 +1,7 @@
 package bm
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -11,6 +12,11 @@ type Shell struct {
 }
 
 func (sh Shell) Run(cmd string) error {
+	sh.Out <- Output{
+		fmt.Sprintf("$ %s", cmd),
+		sh.Stage,
+	}
+
 	splits := strings.Split(cmd, " ")
 	command := exec.Command(splits[0], splits[1:]...)
 
