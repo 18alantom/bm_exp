@@ -14,6 +14,7 @@ type CommonSiteConfig struct {
 }
 
 func (exec *Exec) initBench() error {
+	// This output should go into the common bench output
 	if err := os.RemoveAll(exec.Ctx.Target); err != nil {
 		return err
 	}

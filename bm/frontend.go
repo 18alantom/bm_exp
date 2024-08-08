@@ -9,10 +9,10 @@ import (
 	"path"
 )
 
-func installJS(ctx Context, app App, out Out) error {
+func installJS(ctx Context, stage Stage, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Installing JS Dependencies for %s", app.Name()),
-		Stage: InstallJS,
+		Stage: stage,
 	}
 
 	appPath := GetAppPath(ctx, app)
@@ -24,13 +24,13 @@ func installJS(ctx Context, app App, out Out) error {
 	}
 
 	command := fmt.Sprintf("yarn --cwd %s install", appPath)
-	return Shell{Out: out.Output, Stage: InstallJS}.Run(command)
+	return Shell{Out: out.Output, Stage: stage}.Run(command)
 }
 
-func buildFrontend(ctx Context, app App, out Out) error {
+func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Building Frontend for %s", app.Name()),
-		Stage: BuildFrontend,
+		Stage: stage,
 	}
 
 	appPath := GetAppPath(ctx, app)
@@ -46,7 +46,7 @@ func buildFrontend(ctx Context, app App, out Out) error {
 	}
 
 	command := fmt.Sprintf("yarn --cwd %s build", appPath)
-	return Shell{Out: out.Output, Stage: BuildFrontend}.Run(command)
+	return Shell{Out: out.Output, Stage: stage}.Run(command)
 }
 
 func readPackageJSON(appPath string) (PackageJSON, error) {

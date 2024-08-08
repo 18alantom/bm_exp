@@ -58,7 +58,6 @@ func merge(outs []Out) {
 		InstallPy:     Cyan,
 		Completed:     Green,
 		Stopped:       Yellow,
-		Errored:       Red,
 	}
 
 	getOutput := func(out Out) {
@@ -66,12 +65,14 @@ func merge(outs []Out) {
 			select {
 			case output := <-out.Output:
 				data := strings.TrimRight(output.Data, " \n\t\r")
-				mux <- fmt.Sprintf(
-					"%s%-26s\x1b[m \x1b[33m%-16s\x1b[m %s\r\n",
-					colorMap[output.Stage],
-					output.Stage,
-					out.App, data,
-				)
+				for _, data_split := range strings.Split(data, "\n") {
+					mux <- fmt.Sprintf(
+						"%s%-26s\x1b[m \x1b[33m%-16s\x1b[m %s\r\n",
+						colorMap[output.Stage],
+						output.Stage,
+						out.App, data_split,
+					)
+				}
 			case <-out.Done:
 				wgOutput.Done()
 				return

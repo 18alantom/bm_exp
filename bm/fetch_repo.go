@@ -7,14 +7,14 @@ import (
 	"test/bm_poc/utils"
 )
 
-func fetchRepo(ctx Context, app App, out Out) error {
+func fetchRepo(ctx Context, stage Stage, app App, out Out) error {
 	// TODO:
 	// - fix git output capture
 	// - repo uid, guid?
 
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Fetching %s", app.Name()),
-		Stage: FetchRepo,
+		Stage: stage,
 	}
 	cachePath := getCachePath(ctx, app)
 	targetPath := GetAppPath(ctx, app)
@@ -22,7 +22,7 @@ func fetchRepo(ctx Context, app App, out Out) error {
 	// Ensure repo exists in the cache folder
 	var err error = nil
 	if !hasCache(cachePath) {
-		if err = cloneRepo(app, out, cachePath); err != nil {
+		if err = cloneRepo(stage, app, out, cachePath); err != nil {
 			return err
 		}
 	}
@@ -38,12 +38,12 @@ func fetchRepo(ctx Context, app App, out Out) error {
 	return nil
 }
 
-func cloneRepo(app App, out Out, cachePath string) error {
+func cloneRepo(stage Stage, app App, out Out, cachePath string) error {
 	url := fmt.Sprintf("https://github.com/%s/%s", app.User, app.Repo)
 
 	// TODO: clone to cache or clone to target then copy to cache?
 	command := fmt.Sprintf("git clone %s --depth 1 %s", url, cachePath)
-	return Shell{Out: out.Output, Stage: FetchRepo}.Run(command)
+	return Shell{Out: out.Output, Stage: stage}.Run(command)
 }
 
 func getCachePath(ctx Context, app App) string {

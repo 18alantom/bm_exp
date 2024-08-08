@@ -3,31 +3,44 @@ package bm
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type Exec struct {
 	Ctx Context
 
-	apps     []App
-	outs     []Out
-	stop     *Stop
-	err_chan chan string
+	apps []App
+	outs []Out
+	stop *Stop
+
+	err_chan  chan string
+	time_chan chan TimeTuple
+}
+
+type ActionTuple struct {
+	action Action
+	stage  Stage
 }
 
 // TODO:
-// - Measure per stage timing
 // - Stage start and stage end message (whether stage failed)
 // - Put shell output message ($ ...) in shell.run itself
 // - Cleanup on error
 // - Timestamp all outputs
 // - App is not erroring out soon enough
 
-func (exec *Exec) Execute(apps []App, outs []Out, err_chan chan string, concurrently bool) {
+func (exec *Exec) Execute(
+	apps []App, outs []Out,
+	err_chan chan string, time_chan chan TimeTuple,
+	concurrently bool,
+) {
 	exec.apps = apps
 	exec.outs = outs
 	exec.stop = NewStop()
 	exec.err_chan = err_chan
+	exec.time_chan = time_chan
 
+	defer close(exec.time_chan)
 	defer close(exec.err_chan)
 	defer exec.done()
 	defer exec.stop.stop()
@@ -41,11 +54,11 @@ func (exec *Exec) Execute(apps []App, outs []Out, err_chan chan string, concurre
 }
 
 func (exec *Exec) executeActions(concurrently bool) {
-	concurrentActions := []Action{
-		fetchRepo,
-		validate,
-		installJS,
-		buildFrontend,
+	concurrentActions := []ActionTuple{
+		{fetchRepo, FetchRepo},
+		{validate, Validate},
+		{installJS, InstallJS},
+		{buildFrontend, BuildFrontend},
 	}
 
 	if concurrently {
@@ -54,18 +67,18 @@ func (exec *Exec) executeActions(concurrently bool) {
 		exec.sequentialSequence(concurrentActions)
 	}
 
-	sequentialActions := []Action{
-		installPy,
-		completed,
+	sequentialActions := []ActionTuple{
+		{installPy, InstallPy},
+		{completed, Completed},
 	}
 	exec.sequentialSequence(sequentialActions)
 }
 
-func (exec *Exec) concurrentSequence(actions []Action) {
+func (exec *Exec) concurrentSequence(actions []ActionTuple) {
 	var wg sync.WaitGroup
 	wg.Add(len(exec.apps))
 
-	runSequential := func(app App, out Out, actions []Action) {
+	runSequential := func(app App, out Out, actions []ActionTuple) {
 		exec.sequential(app, out, actions)
 		wg.Done()
 	}
@@ -76,7 +89,7 @@ func (exec *Exec) concurrentSequence(actions []Action) {
 	wg.Wait()
 }
 
-func (exec *Exec) sequentialSequence(actions []Action) error {
+func (exec *Exec) sequentialSequence(actions []ActionTuple) error {
 	for i, app := range exec.apps {
 		out := exec.outs[i]
 
@@ -92,18 +105,32 @@ func (exec *Exec) sequentialSequence(actions []Action) error {
 	return nil
 }
 
-func (exec *Exec) sequential(app App, out Out, actions []Action) error {
-	for _, action := range actions {
+func (exec *Exec) sequential(app App, out Out, actions []ActionTuple) error {
+	for _, t := range actions {
 		if exec.stop.Stopped() {
-			stopped(exec.Ctx, app, out)
+			stopped(exec.Ctx, Stopped, app, out)
 			return nil
 		}
 
-		if err := action(exec.Ctx, app, out); err != nil {
-			errored(app, out, err.Error())
+		start := time.Now()
+		err := t.action(exec.Ctx, t.stage, app, out)
+		end := time.Since(start)
+		exec.time_chan <- TimeTuple{app.Name(), t.stage, end}
+
+		if err != nil {
+			out.Output <- Output{
+				Data:  fmt.Sprintf("Error: %s (%.3fs)", err.Error(), end.Seconds()),
+				Stage: t.stage,
+			}
+
 			exec.stop.stop()
 			exec.err_chan <- fmt.Sprintf("%s :: %s", app.Name(), err.Error())
 			return err
+		}
+
+		out.Output <- Output{
+			Data:  fmt.Sprintf("Done (%.3fs)", end.Seconds()),
+			Stage: t.stage,
 		}
 	}
 
