@@ -24,7 +24,7 @@ func installJS(ctx Context, stage Stage, app App, out Out) error {
 	}
 
 	command := fmt.Sprintf("yarn --cwd %s install", appPath)
-	return Shell{Out: out.Output, Stage: stage}.Run(command)
+	return Shell{Output: out.Output, Stage: stage}.Run(command)
 }
 
 func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
@@ -46,7 +46,7 @@ func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
 	}
 
 	command := fmt.Sprintf("yarn --cwd %s build", appPath)
-	return Shell{Out: out.Output, Stage: stage}.Run(command)
+	return Shell{Output: out.Output, Stage: stage}.Run(command)
 }
 
 func readPackageJSON(appPath string) (PackageJSON, error) {

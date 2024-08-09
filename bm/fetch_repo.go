@@ -43,7 +43,7 @@ func cloneRepo(stage Stage, app App, out Out, cachePath string) error {
 
 	// TODO: clone to cache or clone to target then copy to cache?
 	command := fmt.Sprintf("git clone %s --depth 1 %s", url, cachePath)
-	return Shell{Out: out.Output, Stage: stage}.Run(command)
+	return Shell{Output: out.Output, Stage: stage}.Run(command)
 }
 
 func getCachePath(ctx Context, app App) string {

@@ -28,6 +28,7 @@ type ActionTuple struct {
 // - Cleanup on error
 // - Timestamp all outputs
 // - App is not erroring out soon enough
+// - Timeouts
 
 func (exec *Exec) Execute(
 	apps []App, outs []Out,
@@ -45,10 +46,15 @@ func (exec *Exec) Execute(
 	defer exec.done()
 	defer exec.stop.stop()
 
-	if err := exec.initBench(); err != nil {
-		err_chan <- err.Error()
+	benchOut := outs[len(outs)-1]
+
+	start := time.Now()
+	if err := exec.initBench(benchOut.Output); err != nil {
+		benchOut.Output <- doneErrorOutput(err, time.Since(start), InitBench)
+		exec.err_chan <- fmt.Sprintf("%s :: %s", "bench", err.Error())
 		return
 	}
+	benchOut.Output <- doneOutput(time.Since(start), InitBench)
 
 	exec.executeActions(concurrently)
 }
@@ -118,20 +124,13 @@ func (exec *Exec) sequential(app App, out Out, actions []ActionTuple) error {
 		exec.time_chan <- TimeTuple{app.Name(), t.stage, end}
 
 		if err != nil {
-			out.Output <- Output{
-				Data:  fmt.Sprintf("Error: %s (%.3fs)", err.Error(), end.Seconds()),
-				Stage: t.stage,
-			}
-
+			out.Output <- doneErrorOutput(err, end, t.stage)
 			exec.stop.stop()
 			exec.err_chan <- fmt.Sprintf("%s :: %s", app.Name(), err.Error())
 			return err
 		}
 
-		out.Output <- Output{
-			Data:  fmt.Sprintf("Done (%.3fs)", end.Seconds()),
-			Stage: t.stage,
-		}
+		out.Output <- doneOutput(end, t.stage)
 	}
 
 	return nil
@@ -166,5 +165,19 @@ func (s *Stop) Stopped() bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func doneOutput(end time.Duration, stage Stage) Output {
+	return Output{
+		Data:  fmt.Sprintf("Done (%.3fs)", end.Seconds()),
+		Stage: stage,
+	}
+}
+
+func doneErrorOutput(err error, end time.Duration, stage Stage) Output {
+	return Output{
+		Data:  fmt.Sprintf("Error: %s (%.3fs)", err.Error(), end.Seconds()),
+		Stage: stage,
 	}
 }

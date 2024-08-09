@@ -20,26 +20,36 @@ type Out struct {
 }
 
 const (
-	Red     ANSIColor = "\x1b[31m"
-	Green   ANSIColor = "\x1b[32m"
-	Yellow  ANSIColor = "\x1b[33m"
-	Blue    ANSIColor = "\x1b[34m"
-	Magenta ANSIColor = "\x1b[35m"
-	Cyan    ANSIColor = "\x1b[36m"
-	White   ANSIColor = "\x1b[37m"
-	Purple  ANSIColor = "\x1b[38;5;177m"
-	Orange  ANSIColor = "\x1b[38;5;214m"
-	Salmon  ANSIColor = "\x1b[38;5;223m"
+	Red       ANSIColor = "\x1b[31m"
+	Green     ANSIColor = "\x1b[32m"
+	Yellow    ANSIColor = "\x1b[33m"
+	Blue      ANSIColor = "\x1b[34m"
+	Magenta   ANSIColor = "\x1b[35m"
+	Cyan      ANSIColor = "\x1b[36m"
+	White     ANSIColor = "\x1b[37m"
+	Purple    ANSIColor = "\x1b[38;5;177m"
+	Orange    ANSIColor = "\x1b[38;5;214m"
+	Salmon    ANSIColor = "\x1b[38;5;223m"
+	Turquoise ANSIColor = "\x1b[38;5;50m"
 )
 
 func getOuts(apps []App) []Out {
-	outs := make([]Out, len(apps))
+	outs := make([]Out, len(apps)+1)
+
+	// App outs
 	for i, app := range apps {
 		outs[i] = Out{
 			Output: make(chan Output),
 			Done:   make(chan struct{}),
 			App:    fmt.Sprintf("%s/%s", app.User, app.Repo),
 		}
+	}
+
+	// Bench out for non app output
+	outs[len(outs)-1] = Out{
+		Output: make(chan Output),
+		Done:   make(chan struct{}),
+		App:    "bench",
 	}
 
 	return outs
@@ -51,6 +61,7 @@ func merge(outs []Out) {
 	wgOutput.Add(len(outs))
 
 	colorMap := map[Stage]ANSIColor{
+		InitBench:     Turquoise,
 		FetchRepo:     Salmon,
 		Validate:      Orange,
 		InstallJS:     Purple,

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path"
 )
@@ -13,16 +14,53 @@ type CommonSiteConfig struct {
 	WebServerPort int `json:"webserver_port"`
 }
 
-func (exec *Exec) initBench() error {
+var pathsInBench = []string{
+	"apps", "sites", "config", "logs", "config/pids",
+}
+
+func (exec *Exec) initBench(output chan Output) error {
+	output <- Output{"Initializing directories", InitBench}
 	// This output should go into the common bench output
+	if err := exec.initDirs(); err != nil {
+		return err
+	}
+
+	output <- Output{"Initializing python env", InitBench}
+	exec.initPythonEnv(output)
+
+	output <- Output{"Initializing config", InitBench}
+	return exec.initConfig()
+}
+
+func (exec *Exec) initDirs() error {
+	// Remove prior bench if it exists
+	// TODO: Probably should fail? match frappe/bench behavior
 	if err := os.RemoveAll(exec.Ctx.Target); err != nil {
 		return err
 	}
 
-	return writeCommonSiteConfig(exec)
+	// Create bench folder
+	if err := os.MkdirAll(exec.Ctx.Target, 0o755); err != nil {
+		return err
+	}
+
+	for _, sub := range pathsInBench {
+		subDir := path.Join(exec.Ctx.Target, sub)
+		os.MkdirAll(subDir, 0o755)
+	}
+
+	return nil
 }
 
-func writeCommonSiteConfig(exec *Exec) error {
+func (exec *Exec) initPythonEnv(output chan Output) error {
+	envPath := path.Join(exec.Ctx.Target, "env")
+	command := fmt.Sprintf("python -m venv %s", envPath)
+	return Shell{output, InitBench}.Run(command)
+}
+
+// Dummy functions writes common_site_config fields only to the extent that it's
+// required by app installs
+func (exec *Exec) initConfig() error {
 	sites := path.Join(exec.Ctx.Target, "sites")
 	if err := os.MkdirAll(sites, 0o755); err != nil {
 		return err

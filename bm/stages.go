@@ -13,6 +13,7 @@ type Context struct {
 type Action func(ctx Context, stage Stage, app App, out Out) error
 
 const (
+	InitBench     Stage = "InitBench"
 	FetchRepo     Stage = "FetchRepository"
 	Validate      Stage = "Validate"
 	InstallJS     Stage = "InstallJSDependencies"
