@@ -25,11 +25,11 @@ func (bm *BM) SetupBench(ctx Context) {
 	start := time.Now()
 	outs := getOuts(bm.Config.Apps)
 
-	err_strs := make([]string, 0)
-	err_chan := make(chan string, len(bm.Config.Apps))
+	errStrs := make([]string, 0)
+	errChan := make(chan string, len(bm.Config.Apps))
 
-	time_map := make(TimeMap)
-	time_chan := make(chan TimeTuple, len(bm.Config.Apps))
+	timeMap := make(TimeMap)
+	timeChan := make(chan TimeTuple, len(bm.Config.Apps))
 
 	wg := sync.WaitGroup{}
 	exec := Exec{Ctx: ctx}
@@ -37,8 +37,8 @@ func (bm *BM) SetupBench(ctx Context) {
 	// Handle err chan messages
 	wg.Add(1)
 	go func() {
-		for err := range err_chan {
-			err_strs = append(err_strs, err)
+		for err := range errChan {
+			errStrs = append(errStrs, err)
 		}
 		wg.Done()
 	}()
@@ -46,11 +46,11 @@ func (bm *BM) SetupBench(ctx Context) {
 	// Handle time chan messages
 	wg.Add(1)
 	go func() {
-		for t := range time_chan {
-			m, ok := time_map[t.App]
+		for t := range timeChan {
+			m, ok := timeMap[t.App]
 			if !ok {
 				m = make(map[Stage]time.Duration)
-				time_map[t.App] = m
+				timeMap[t.App] = m
 			}
 
 			m[t.Stage] = t.Duration
@@ -61,7 +61,7 @@ func (bm *BM) SetupBench(ctx Context) {
 	// Handle execute
 	wg.Add(1)
 	go func() {
-		exec.Execute(bm.Config.Apps, outs, err_chan, time_chan, true)
+		exec.Execute(bm.Config.Apps, outs, errChan, timeChan, true)
 		wg.Done()
 	}()
 
@@ -73,19 +73,20 @@ func (bm *BM) SetupBench(ctx Context) {
 	}()
 
 	wg.Wait()
-	bm.wrapUp(err_strs, start)
-	printTimeBreakdown(time_map)
+
+	end := time.Since(start).Seconds()
+	bm.wrapUp(errStrs, end)
+	printTimeBreakdown(timeMap, end)
 }
 
-func (bm *BM) wrapUp(errs []string, start time.Time) {
-	end := time.Since(start).Seconds()
+func (bm *BM) wrapUp(errs []string, end float64) {
 	if len(errs) > 0 {
 		fmt.Println("\x1b[31;1mBench setup failed\x1b[m")
 	} else {
 		fmt.Println("\x1b[32;1mBench setup succeeded\x1b[m")
 	}
 
-	fmt.Printf("\nTime taken: %.3fs\n", end)
+	fmt.Printf("\nWall time taken: %.3fs\n", end)
 
 	if len(errs) > 0 {
 		fmt.Println("Errors:")
@@ -95,7 +96,7 @@ func (bm *BM) wrapUp(errs []string, start time.Time) {
 	}
 }
 
-func printTimeBreakdown(time_map TimeMap) {
+func printTimeBreakdown(timeMap TimeMap, wallTime float64) {
 	seq := []struct {
 		Stage
 		string
@@ -108,17 +109,20 @@ func printTimeBreakdown(time_map TimeMap) {
 		{Completed, "complete"},
 		{Stopped, "stop"},
 	}
-	grand_total := 0.0
+
+	concTotal := 0.0 // time taken executing concurrent steps, less than wall time
+	seqTotal := 0.0  // time taken executing sequential steps, same as wall time
+	appTotal := 0.0
 
 	// Print header
-	fmt.Printf("\n\nTime Breakdown\n| %-16s ", "org/repo")
+	fmt.Printf("\n\nTime Breakdown:\n| %-16s ", "org/repo")
 	for _, s := range seq {
 		fmt.Printf("| %9s ", s.string)
 	}
 	fmt.Printf("| %9s |\n", "total")
 
 	// Print data
-	for key, val := range time_map {
+	for key, val := range timeMap {
 		total := 0.0
 		fmt.Printf("| %-16s ", key)
 		for _, s := range seq {
@@ -130,11 +134,38 @@ func printTimeBreakdown(time_map TimeMap) {
 
 			total += sec
 			fmt.Printf("| %8.3fs ", sec)
+
+			if In(s.Stage, FetchRepo, Validate, InstallJS, BuildFrontend) {
+				concTotal += sec
+			} else {
+				seqTotal += sec
+			}
+			appTotal += sec
 		}
 
 		fmt.Printf("| %8.3fs |\n", total)
-		grand_total += total
 	}
 
-	fmt.Printf("Grand total: %0.3fs\n", grand_total)
+	benchDur := timeMap["bench"][Bench].Seconds()
+	total := appTotal + benchDur
+
+	fmt.Printf("\nTotals:\n")
+	fmt.Printf("Bench init            : %8.3fs\n", benchDur)
+	fmt.Printf("Concurrent app stages : %8.3fs\n", concTotal)
+	fmt.Printf("Sequential app stages : %8.3fs\n", seqTotal)
+	fmt.Printf("---------------------------------\n")
+	fmt.Printf("Total app             : %8.3fs\n", appTotal)
+	fmt.Printf("Total app + bench     : %8.3fs\n", appTotal+benchDur)
+	fmt.Printf("---------------------------------\n")
+	fmt.Printf("Total wall time       : %8.3fs\n", wallTime)
+	fmt.Printf("Time saved            : %8.3fs\n", total-wallTime)
+}
+
+func In(s Stage, values ...Stage) bool {
+	for _, v := range values {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

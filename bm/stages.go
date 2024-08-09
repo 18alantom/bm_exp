@@ -13,7 +13,7 @@ type Context struct {
 type Action func(ctx Context, stage Stage, app App, out Out) error
 
 const (
-	InitBench     Stage = "InitBench"
+	Bench         Stage = "Bench"
 	FetchRepo     Stage = "FetchRepository"
 	Validate      Stage = "Validate"
 	InstallJS     Stage = "InstallJSDependencies"
@@ -24,12 +24,10 @@ const (
 )
 
 func validate(ctx Context, stage Stage, app App, out Out) error {
-	RandSleep(1000)
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Validating %s", app.Name()),
 		Stage: stage,
 	}
-
 	return nil
 }
 

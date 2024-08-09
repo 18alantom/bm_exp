@@ -46,17 +46,30 @@ func (exec *Exec) Execute(
 	defer exec.done()
 	defer exec.stop.stop()
 
-	benchOut := outs[len(outs)-1]
-
-	start := time.Now()
-	if err := exec.initBench(benchOut.Output); err != nil {
-		benchOut.Output <- doneErrorOutput(err, time.Since(start), InitBench)
-		exec.err_chan <- fmt.Sprintf("%s :: %s", "bench", err.Error())
+	if err := exec.execInitBench(); err != nil {
 		return
 	}
-	benchOut.Output <- doneOutput(time.Since(start), InitBench)
 
 	exec.executeActions(concurrently)
+}
+
+func (exec *Exec) execInitBench() error {
+	benchOut := exec.outs[len(exec.outs)-1]
+
+	start := time.Now()
+	err := exec.initBench(benchOut.Output)
+	end := time.Since(start)
+
+	exec.time_chan <- TimeTuple{"bench", Bench, end}
+
+	if err != nil {
+		benchOut.Output <- doneErrorOutput(err, end, Bench)
+		exec.err_chan <- fmt.Sprintf("%s :: %s", "bench", err.Error())
+		return err
+	}
+
+	benchOut.Output <- doneOutput(end, Bench)
+	return nil
 }
 
 func (exec *Exec) executeActions(concurrently bool) {

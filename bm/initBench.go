@@ -19,16 +19,16 @@ var pathsInBench = []string{
 }
 
 func (exec *Exec) initBench(output chan Output) error {
-	output <- Output{"Initializing directories", InitBench}
+	output <- Output{"Initializing directories", Bench}
 	// This output should go into the common bench output
 	if err := exec.initDirs(); err != nil {
 		return err
 	}
 
-	output <- Output{"Initializing python env", InitBench}
+	output <- Output{"Initializing python env", Bench}
 	exec.initPythonEnv(output)
 
-	output <- Output{"Initializing config", InitBench}
+	output <- Output{"Initializing config", Bench}
 	return exec.initConfig()
 }
 
@@ -55,7 +55,7 @@ func (exec *Exec) initDirs() error {
 func (exec *Exec) initPythonEnv(output chan Output) error {
 	envPath := path.Join(exec.Ctx.Target, "env")
 	command := fmt.Sprintf("python -m venv %s", envPath)
-	return Shell{output, InitBench}.Run(command)
+	return Shell{output, Bench}.Run(command)
 }
 
 // Dummy functions writes common_site_config fields only to the extent that it's

@@ -61,7 +61,7 @@ func merge(outs []Out) {
 	wgOutput.Add(len(outs))
 
 	colorMap := map[Stage]ANSIColor{
-		InitBench:     Turquoise,
+		Bench:     Turquoise,
 		FetchRepo:     Salmon,
 		Validate:      Orange,
 		InstallJS:     Purple,
