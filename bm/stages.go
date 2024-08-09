@@ -34,13 +34,9 @@ func validate(ctx Context, stage Stage, app App, out Out) error {
 }
 
 func installPy(ctx Context, stage Stage, app App, out Out) error {
-	RandSleep(1000)
-	out.Output <- Output{
-		Data:  fmt.Sprintf("Installing Python dependencies %s", app.Name()),
-		Stage: stage,
-	}
-
-	return nil
+	appPath := GetAppPath(ctx, app)
+	command := fmt.Sprintf("python -m pip install --upgrade -e %s", appPath)
+	return Shell{out.Output, stage}.Run(command)
 }
 
 func completed(ctx Context, stage Stage, app App, out Out) error {

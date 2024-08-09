@@ -130,7 +130,9 @@ func (exec *Exec) sequential(app App, out Out, actions []ActionTuple) error {
 			return err
 		}
 
-		out.Output <- doneOutput(end, t.stage)
+		if t.stage != Completed {
+			out.Output <- doneOutput(end, t.stage)
+		}
 	}
 
 	return nil
