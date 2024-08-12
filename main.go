@@ -41,7 +41,7 @@ func getBenchConfig(args bm.Args) bm.Config {
 }
 
 func getArgs() bm.Args {
-	opt := bm.Args{Sequential: false, NoCache: false, Apps: make([]string, 0)}
+	opt := bm.Args{Sequential: false, NoCache: false, Apps: []string{}}
 
 	inApps := false
 	for _, arg := range os.Args {

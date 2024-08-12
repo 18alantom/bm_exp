@@ -31,7 +31,6 @@ type ActionTuple struct {
 
 // TODO:
 // - Stage start and stage end message (whether stage failed)
-// - Put shell output message ($ ...) in shell.run itself
 // - Cleanup on error
 // - Timestamp all outputs
 // - App is not erroring out soon enough

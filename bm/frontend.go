@@ -23,17 +23,15 @@ func installJS(ctx Context, stage Stage, app App, out Out) error {
 		return nil
 	}
 
-	command := fmt.Sprintf("yarn --cwd %s install", appPath)
 	shell := NewShell(out.Output, stage)
+	shell.AppendEnv(getCacheFolderEnv(ctx))
 
-	cacheFolder := path.Join(ctx.Cache, "yarn")
-	cacheFolderEnv := fmt.Sprintf("YARN_CACHE_FOLDER=%s", cacheFolder)
-	shell.AppendEnv(cacheFolderEnv)
-
+	command := fmt.Sprintf("yarn --cwd %s install", appPath)
 	return shell.Run(command)
 }
 
 func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
+	// TODO: Probably build this outside the bench then copy the built app inside?
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Building Frontend for %s", app.Name()),
 		Stage: stage,
@@ -51,13 +49,10 @@ func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
 		return err
 	}
 
-	command := fmt.Sprintf("yarn --cwd %s build", appPath)
 	shell := NewShell(out.Output, stage)
+	shell.AppendEnv(getCacheFolderEnv(ctx))
 
-	cacheFolder := path.Join(ctx.Cache, "yarn")
-	cacheFolderEnv := fmt.Sprintf("YARN_CACHE_FOLDER=%s", cacheFolder)
-	shell.AppendEnv(cacheFolderEnv)
-
+	command := fmt.Sprintf("yarn --cwd %s build", appPath)
 	return shell.Run(command)
 }
 
@@ -72,4 +67,13 @@ func readPackageJSON(appPath string) (PackageJSON, error) {
 
 	json.Unmarshal(data, &pj)
 	return pj, nil
+}
+
+func getCacheFolderEnv(ctx Context) string {
+	cacheFolder := path.Join(ctx.Cache, "yarn")
+	if ctx.NoCache {
+		cacheFolder = path.Join("/tmp", "junk", "yarn")
+	}
+
+	return fmt.Sprintf("YARN_CACHE_FOLDER=%s", cacheFolder)
 }

@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+// TODO:
+// Not all output is written, I'm guessing this is cause of `\r` instead of `\n`
+// or `\r\n`. Fix this behavior.
+
 type Shell struct {
 	Output chan Output
 	Stage  Stage
@@ -29,7 +33,7 @@ func (sh Shell) Run(cmd string) error {
 
 	splits := strings.Split(cmd, " ")
 	command := exec.Command(splits[0], splits[1:]...)
-	command.Env = append(os.Environ(), command.Env...)
+	command.Env = append(os.Environ(), sh.Env...)
 
 	command.Stdout = ChanWriter{sh.Output, sh.Stage}
 	command.Stderr = ChanWriter{sh.Output, sh.Stage}

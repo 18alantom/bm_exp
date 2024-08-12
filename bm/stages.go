@@ -2,7 +2,6 @@ package bm
 
 import (
 	"fmt"
-	"path"
 )
 
 // Each Stage is associated with an Action
@@ -26,21 +25,6 @@ func validate(ctx Context, stage Stage, app App, out Out) error {
 		Stage: stage,
 	}
 	return nil
-}
-
-func installPy(ctx Context, stage Stage, app App, out Out) error {
-	appPath := GetAppPath(ctx, app)
-	command := fmt.Sprintf("python -m pip install --upgrade -e %s", appPath)
-	if ctx.NoCache {
-		command = fmt.Sprintf("%s --no-cache-dir", command)
-	}
-	shell := NewShell(out.Output, stage)
-
-	cacheFolder := path.Join(ctx.Cache, "pip")
-	cacheFolderEnv := fmt.Sprintf("PIP_CACHE_FOLDER=%s", cacheFolder)
-	shell.AppendEnv(cacheFolderEnv)
-
-	return shell.Run(command)
 }
 
 func completed(ctx Context, stage Stage, app App, out Out) error {
