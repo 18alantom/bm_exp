@@ -2,14 +2,11 @@ package bm
 
 import (
 	"fmt"
+	"path"
 )
 
 // Each Stage is associated with an Action
 type Stage string
-type Context struct {
-	Target string
-	Cache  string
-}
 type Action func(ctx Context, stage Stage, app App, out Out) error
 
 const (
@@ -34,7 +31,16 @@ func validate(ctx Context, stage Stage, app App, out Out) error {
 func installPy(ctx Context, stage Stage, app App, out Out) error {
 	appPath := GetAppPath(ctx, app)
 	command := fmt.Sprintf("python -m pip install --upgrade -e %s", appPath)
-	return Shell{out.Output, stage}.Run(command)
+	if ctx.NoCache {
+		command = fmt.Sprintf("%s --no-cache-dir", command)
+	}
+	shell := NewShell(out.Output, stage)
+
+	cacheFolder := path.Join(ctx.Cache, "pip")
+	cacheFolderEnv := fmt.Sprintf("PIP_CACHE_FOLDER=%s", cacheFolder)
+	shell.AppendEnv(cacheFolderEnv)
+
+	return shell.Run(command)
 }
 
 func completed(ctx Context, stage Stage, app App, out Out) error {

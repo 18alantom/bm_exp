@@ -9,17 +9,23 @@ import (
 
 type Config struct {
 	Apps []App
+	Args Args
+}
+
+type Args struct {
+	Sequential bool     // run installation sequentially
+	NoCache    bool     // skip cache for yarn, pip, etc
+	Apps       []string // only frappe/app apps allowed
 }
 
 type App struct {
-	User   string
-	Repo   string
-	Branch string
+	User string
+	Repo string
 }
 
 type PackageJSON struct {
 	Scripts struct {
-		Build   string `json:"build"`
+		Build string `json:"build"`
 	} `json:"scripts"`
 }
 

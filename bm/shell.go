@@ -2,6 +2,7 @@ package bm
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -9,6 +10,15 @@ import (
 type Shell struct {
 	Output chan Output
 	Stage  Stage
+	Env    []string
+}
+
+func NewShell(output chan Output, stage Stage) Shell {
+	return Shell{Output: output, Stage: stage, Env: []string{}}
+}
+
+func (sh *Shell) AppendEnv(env string) {
+	sh.Env = append(sh.Env, env)
 }
 
 func (sh Shell) Run(cmd string) error {
@@ -19,6 +29,7 @@ func (sh Shell) Run(cmd string) error {
 
 	splits := strings.Split(cmd, " ")
 	command := exec.Command(splits[0], splits[1:]...)
+	command.Env = append(os.Environ(), command.Env...)
 
 	command.Stdout = ChanWriter{sh.Output, sh.Stage}
 	command.Stderr = ChanWriter{sh.Output, sh.Stage}

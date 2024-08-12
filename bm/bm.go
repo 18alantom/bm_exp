@@ -61,7 +61,7 @@ func (bm *BM) SetupBench(ctx Context) {
 	// Handle execute
 	wg.Add(1)
 	go func() {
-		exec.Execute(bm.Config.Apps, outs, errChan, timeChan, true)
+		exec.Execute(bm.Config.Apps, outs, errChan, timeChan)
 		wg.Done()
 	}()
 
@@ -123,6 +123,10 @@ func printTimeBreakdown(timeMap TimeMap, wallTime float64) {
 
 	// Print data
 	for key, val := range timeMap {
+		if key == "bench" {
+			continue
+		}
+
 		total := 0.0
 		fmt.Printf("| %-16s ", key)
 		for _, s := range seq {

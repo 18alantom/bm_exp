@@ -21,11 +21,10 @@ func fetchRepo(ctx Context, stage Stage, app App, out Out) error {
 
 	// Ensure repo exists in the cache folder
 	var err error = nil
-	if !hasCache(cachePath) {
-		if err = cloneRepo(stage, app, out, cachePath); err != nil {
-			return err
-		}
+	if ctx.NoCache || !hasCache(cachePath) {
+		err = cloneRepo(stage, app, out, cachePath)
 	}
+
 	if err != nil {
 		return err
 	}
@@ -43,7 +42,7 @@ func cloneRepo(stage Stage, app App, out Out, cachePath string) error {
 
 	// TODO: clone to cache or clone to target then copy to cache?
 	command := fmt.Sprintf("git clone %s --depth 1 %s", url, cachePath)
-	return Shell{Output: out.Output, Stage: stage}.Run(command)
+	return NewShell(out.Output, stage).Run(command)
 }
 
 func getCachePath(ctx Context, app App) string {

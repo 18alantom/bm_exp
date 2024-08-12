@@ -15,7 +15,7 @@ type CommonSiteConfig struct {
 }
 
 var pathsInBench = []string{
-	"apps", "sites", "config", "logs", "config/pids",
+	"apps", "sites", "sites/assets", "config", "logs", "config/pids",
 }
 
 func (exec *Exec) initBench(output chan Output) error {
@@ -29,7 +29,7 @@ func (exec *Exec) initBench(output chan Output) error {
 	exec.initPythonEnv(output)
 
 	output <- Output{"Initializing config", Bench}
-	return exec.initConfig()
+	return exec.initFiles()
 }
 
 func (exec *Exec) initDirs() error {
@@ -55,24 +55,71 @@ func (exec *Exec) initDirs() error {
 func (exec *Exec) initPythonEnv(output chan Output) error {
 	envPath := path.Join(exec.Ctx.Target, "env")
 	command := fmt.Sprintf("python -m venv %s", envPath)
-	return Shell{output, Bench}.Run(command)
+	return NewShell(output, Bench).Run(command)
+}
+
+func (exec *Exec) initFiles() error {
+	if err := exec.initConfigJson(); err != nil {
+		return err
+	}
+
+	if err := exec.initAppsTxt(); err != nil {
+		return err
+	}
+
+	return exec.initAssetsJson()
+}
+
+func (exec *Exec) initAssetsJson() error {
+	json, err := json.Marshal(struct{}{})
+	if err != nil {
+		return err
+	}
+
+	assets := path.Join(exec.Ctx.Target, "sites", "assets", "assets.json")
+
+	f, err := os.Create(assets)
+	if err != nil {
+		return err
+	}
+
+	l, err := f.Write(json)
+	if err != nil {
+		return err
+	}
+
+	if l != len(json) {
+		return errors.New("could not write assets.json")
+	}
+
+	return nil
+}
+
+func (exec *Exec) initAppsTxt() error {
+	apps := path.Join(exec.Ctx.Target, "sites", "apps.txt")
+
+	f, err := os.Create(apps)
+	if err != nil {
+		return err
+	}
+
+	if err = f.Close(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Dummy functions writes common_site_config fields only to the extent that it's
 // required by app installs
-func (exec *Exec) initConfig() error {
-	sites := path.Join(exec.Ctx.Target, "sites")
-	if err := os.MkdirAll(sites, 0o755); err != nil {
-		return err
-	}
-
+func (exec *Exec) initConfigJson() error {
 	csc := CommonSiteConfig{9000, 8000}
 	cscBytes, err := json.Marshal(csc)
 	if err != nil {
 		return err
 	}
 
-	cscPath := path.Join(sites, "common_site_config.json")
+	cscPath := path.Join(exec.Ctx.Target, "sites", "common_site_config.json")
 	f, err := os.Create(cscPath)
 	if err != nil {
 		return err

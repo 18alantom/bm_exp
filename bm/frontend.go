@@ -24,7 +24,13 @@ func installJS(ctx Context, stage Stage, app App, out Out) error {
 	}
 
 	command := fmt.Sprintf("yarn --cwd %s install", appPath)
-	return Shell{Output: out.Output, Stage: stage}.Run(command)
+	shell := NewShell(out.Output, stage)
+
+	cacheFolder := path.Join(ctx.Cache, "yarn")
+	cacheFolderEnv := fmt.Sprintf("YARN_CACHE_FOLDER=%s", cacheFolder)
+	shell.AppendEnv(cacheFolderEnv)
+
+	return shell.Run(command)
 }
 
 func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
@@ -46,7 +52,13 @@ func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
 	}
 
 	command := fmt.Sprintf("yarn --cwd %s build", appPath)
-	return Shell{Output: out.Output, Stage: stage}.Run(command)
+	shell := NewShell(out.Output, stage)
+
+	cacheFolder := path.Join(ctx.Cache, "yarn")
+	cacheFolderEnv := fmt.Sprintf("YARN_CACHE_FOLDER=%s", cacheFolder)
+	shell.AppendEnv(cacheFolderEnv)
+
+	return shell.Run(command)
 }
 
 func readPackageJSON(appPath string) (PackageJSON, error) {

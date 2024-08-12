@@ -17,6 +17,13 @@ type Exec struct {
 	time_chan chan TimeTuple
 }
 
+type Context struct {
+	NoCache    bool
+	Sequential bool
+	Target     string
+	Cache      string
+}
+
 type ActionTuple struct {
 	action Action
 	stage  Stage
@@ -33,7 +40,6 @@ type ActionTuple struct {
 func (exec *Exec) Execute(
 	apps []App, outs []Out,
 	err_chan chan string, time_chan chan TimeTuple,
-	concurrently bool,
 ) {
 	exec.apps = apps
 	exec.outs = outs
@@ -50,6 +56,7 @@ func (exec *Exec) Execute(
 		return
 	}
 
+	concurrently := !exec.Ctx.Sequential
 	exec.executeActions(concurrently)
 }
 
