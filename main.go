@@ -18,8 +18,8 @@ func run() {
 	ctx := bm.Context{
 		NoCache:    maker.Config.Args.NoCache,
 		Sequential: maker.Config.Args.Sequential,
-		Target:     "/Users/alan/Desktop/code/test_go/bm_poc/temp/bench",
-		Cache:      "/Users/alan/Desktop/code/test_go/bm_poc/temp/.cache",
+		Target:     "./temp/bench",
+		Cache:      "./temp/.cache",
 	}
 	maker.SetupBench(ctx)
 }

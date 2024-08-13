@@ -8,8 +8,10 @@ import (
 )
 
 // TODO:
-// Not all output is written, I'm guessing this is cause of `\r` instead of `\n`
-// or `\r\n`. Fix this behavior.
+// Not all output is written. This is cause programs can tell if
+// output stream is directed to a tty and change their output depending
+// on that. Git can be forced to show the output by using --progress
+// Not sure if this is important, will reconsider later.
 
 type Shell struct {
 	Output chan Output
@@ -17,15 +19,15 @@ type Shell struct {
 	Env    []string
 }
 
-func NewShell(output chan Output, stage Stage) Shell {
-	return Shell{Output: output, Stage: stage, Env: []string{}}
+func NewShell(output chan Output, stage Stage) *Shell {
+	return &Shell{Output: output, Stage: stage, Env: []string{}}
 }
 
 func (sh *Shell) AppendEnv(env string) {
 	sh.Env = append(sh.Env, env)
 }
 
-func (sh Shell) Run(cmd string) error {
+func (sh *Shell) Run(cmd string) error {
 	sh.Output <- Output{
 		fmt.Sprintf("$ %s", cmd),
 		sh.Stage,

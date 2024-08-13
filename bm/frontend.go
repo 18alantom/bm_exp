@@ -31,7 +31,9 @@ func installJS(ctx Context, stage Stage, app App, out Out) error {
 }
 
 func buildFrontend(ctx Context, stage Stage, app App, out Out) error {
-	// TODO: Probably build this outside the bench then copy the built app inside?
+	// TODO: 
+	// - Probably run build outside the bench then copy the built app inside?
+	// - Cache build assets
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Building Frontend for %s", app.Name()),
 		Stage: stage,

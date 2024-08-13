@@ -2,6 +2,7 @@ package bm
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -61,7 +62,7 @@ func merge(outs []Out) {
 	wgOutput.Add(len(outs))
 
 	colorMap := map[Stage]ANSIColor{
-		Bench:     Turquoise,
+		Bench:         Turquoise,
 		FetchRepo:     Salmon,
 		Validate:      Orange,
 		InstallJS:     Purple,
@@ -72,16 +73,21 @@ func merge(outs []Out) {
 	}
 
 	getOutput := func(out Out) {
+		re := regexp.MustCompile("\n+|\r+|\b+|(\r\n)+")
 		for {
 			select {
 			case output := <-out.Output:
-				data := strings.TrimRight(output.Data, " \n\t\r")
-				for _, data_split := range strings.Split(data, "\n") {
+				for _, raw := range re.Split(output.Data, -1) {
+					data := strings.TrimRight(raw, " \t")
+					if len(data) == 0 {
+						continue
+					}
+
 					mux <- fmt.Sprintf(
 						"%s%-26s\x1b[m \x1b[33m%-16s\x1b[m %s\r\n",
 						colorMap[output.Stage],
 						output.Stage,
-						out.App, data_split,
+						out.App, data,
 					)
 				}
 			case <-out.Done:
