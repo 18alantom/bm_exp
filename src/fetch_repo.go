@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"test/bm_poc/utils"
+
+	"github.com/18alantom/bm/utils"
 )
 
 func fetchRepo(ctx Context, stage Stage, app App, out Out) error {

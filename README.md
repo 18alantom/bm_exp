@@ -5,7 +5,7 @@
 > This is proof of concept for the **Bench Maker**. At present, it does not
 > create a working bench, just verifies the ideas.
 >
-> See the [#POC](#poc) section.
+> See the [POC](#poc) section.
 
 Bench Maker is a performant `bench` replacement. Specifically it is meant to replace the `bench init` and `bench get-app` commands.
 
@@ -137,7 +137,7 @@ This is as of now a proof of concept. It may or may not be fleshed out. The
 ideas and implementations I wanted to test out and have been verified are:
 
 - Concurrent installation of _Frappe Apps_ being possible.
-- Concurrent installation of _Frappe Apps_ much lesser time than sequential installation.
+- Concurrent installation of _Frappe Apps_ taking much lesser time than sequential installation.
 - Multiplexing of output from concurrent installs.
 - Being able to cleanly stop execution if any app install fails.
 
@@ -148,6 +148,28 @@ Few things I have not yet tested out are:
 - Speed up from using alternative package managers than `yarn` or `pip`.
 - Speed up from caching different stages. As of now only the fetch app stage is
   non optimally cached, other than that `yarn` and `pip` use their own caches.
+
+### Run
+
+> [!NOTE]
+>
+> To build this you'll need Go > 1.22.4.
+
+```bash
+# Build the Bench Maker binary `bm`
+go build
+
+# Example invocation
+bm --apps erpnext hrms gameplan builder
+
+# Example invocation without cache
+bm --no-cache --apps erpnext hrms gameplan builder
+```
+
+This will create a `temp` folder:
+
+- `temp/bench`: dummy bench where the apps are installed.
+- `temp/.cache`: where the repos, `yarn` and `pip` cache are.
 
 ## Results
 

@@ -2,11 +2,13 @@ package main
 
 import (
 	"os"
-	"test/bm_poc/bm"
+
+	bm "github.com/18alantom/bm/src"
 )
 
 // TODO:
 // --no-cache [no-cache option]
+// stage timeout
 
 func main() {
 	run()
