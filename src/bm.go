@@ -121,6 +121,13 @@ func printTimeBreakdown(timeMap TimeMap, wallTime float64) {
 	}
 	fmt.Printf("| %9s |\n", "total")
 
+	// Print header separator
+	fmt.Printf("|------------------")
+	for range seq {
+		fmt.Printf("|-----------")
+	}
+	fmt.Printf("|-----------|\n")
+
 	// Print data
 	for key, val := range timeMap {
 		if key == "bench" {

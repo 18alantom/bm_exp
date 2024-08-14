@@ -7,8 +7,9 @@ import (
 )
 
 // TODO:
-// --no-cache [no-cache option]
-// stage timeout
+// - --no-cache [no-cache option]
+// - stage timeout
+// - issue with dep not found when running yarn install (hrms)
 
 func main() {
 	run()

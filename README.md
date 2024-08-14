@@ -159,11 +159,14 @@ Few things I have not yet tested out are:
 # Build the Bench Maker binary `bm`
 go build
 
-# Example invocation
-bm --apps erpnext hrms gameplan builder
+# Example
+./bm --apps erpnext hrms gameplan builder
 
-# Example invocation without cache
-bm --no-cache --apps erpnext hrms gameplan builder
+# Example without cache
+./bm --no-cache --apps erpnext hrms gameplan builder
+
+# Example sequential install
+./bm --seq --apps erpnext hrms gameplan builder
 ```
 
 This will create a `temp` folder:
@@ -171,7 +174,64 @@ This will create a `temp` folder:
 - `temp/bench`: dummy bench where the apps are installed.
 - `temp/.cache`: where the repos, `yarn` and `pip` cache are.
 
-## Results
+## Time taken
+
+1. Empty cache, successfully built.
+
+```shell
+# bm --apps erpnext hrms drive builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/drive     |    9.284s |    0.000s |   37.399s |   12.317s |    2.777s |   61.777s |
+| frappe/hrms      |   11.015s |    0.000s |  435.528s |    6.674s |    2.732s |  455.950s |
+| frappe/erpnext   |   12.659s |    0.000s |    0.908s |    0.000s |    2.825s |   16.392s |
+| frappe/frappe    |   13.112s |    0.000s |   71.343s |    0.922s |    4.424s |   89.802s |
+| frappe/builder   |    1.660s |    0.000s |  299.026s |    7.252s |    2.705s |  310.644s |
+
+Totals:
+Bench init            :    2.028s
+Concurrent app stages :  919.101s
+Sequential app stages :   15.464s
+---------------------------------
+Total app             :  934.565s
+Total app + bench     :  936.593s
+---------------------------------
+Total wall time       :  470.710s
+Time saved            :  465.883s
+```
+
+2. Non empty cache, successfully built, network issue caused slowdown:
+
+```shell
+# bm --apps erpnext hrms drive builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/builder   |    0.098s |    0.000s |   13.320s |    8.037s |    2.665s |   24.121s |
+| frappe/drive     |    0.161s |    0.000s |   43.473s |   12.926s |    2.764s |   59.324s |
+| frappe/hrms      |    0.405s |    0.000s |  300.492s |    6.574s |    2.661s |  310.131s |
+| frappe/frappe    |    0.855s |    0.000s |   11.198s |    1.059s |    4.173s |   17.285s |
+| frappe/erpnext   |    1.163s |    0.000s |    0.211s |    0.000s |    2.811s |    4.185s |
+
+Totals:
+Bench init            :    1.998s
+Concurrent app stages :  399.970s
+Sequential app stages :   15.075s
+---------------------------------
+Total app             :  415.045s
+Total app + bench     :  417.044s
+---------------------------------
+Total wall time       :  324.544s
+Time saved            :   92.500s
+```
+
+```shell
+# When installing JS dependencies for frappe/hrms
+info There appears to be trouble with your network connection. Retrying...
+```
 
 ## Glossary
 
