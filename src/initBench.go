@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 )
 
 type CommonSiteConfig struct {
@@ -19,16 +20,16 @@ var pathsInBench = []string{
 }
 
 func (exec *Exec) initBench(output chan Output) error {
-	output <- Output{"Initializing directories", Bench}
+	output <- Output{"Initializing directories", Bench, time.Now()}
 	// This output should go into the common bench output
 	if err := exec.initDirs(); err != nil {
 		return err
 	}
 
-	output <- Output{"Initializing python env", Bench}
+	output <- Output{"Initializing python env", Bench, time.Now()}
 	exec.initPythonEnv(output)
 
-	output <- Output{"Initializing config", Bench}
+	output <- Output{"Initializing config", Bench, time.Now()}
 	return exec.initFiles()
 }
 

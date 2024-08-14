@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/18alantom/bm/utils"
 )
@@ -16,6 +17,7 @@ func fetchRepo(ctx Context, stage Stage, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Fetching %s", app.Name()),
 		Stage: stage,
+		Time:  time.Now(),
 	}
 	cachePath := getCachePath(ctx, app)
 	targetPath := GetAppPath(ctx, app)

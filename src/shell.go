@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // TODO:
@@ -31,6 +32,7 @@ func (sh *Shell) Run(cmd string) error {
 	sh.Output <- Output{
 		fmt.Sprintf("$ %s", cmd),
 		sh.Stage,
+		time.Now(),
 	}
 
 	splits := strings.Split(cmd, " ")
@@ -49,6 +51,6 @@ type ChanWriter struct {
 }
 
 func (cw ChanWriter) Write(p []byte) (n int, err error) {
-	cw.output <- Output{string(p), cw.stage}
+	cw.output <- Output{string(p), cw.stage, time.Now()}
 	return len(p), nil
 }

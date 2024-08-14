@@ -2,6 +2,7 @@ package bm
 
 import (
 	"fmt"
+	"time"
 )
 
 // Each Stage is associated with an Action
@@ -23,6 +24,7 @@ func validate(ctx Context, stage Stage, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Validating %s", app.Name()),
 		Stage: stage,
+		Time:  time.Now(),
 	}
 	return nil
 }
@@ -31,6 +33,7 @@ func completed(ctx Context, stage Stage, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("Installation Completed %s", app.Name()),
 		Stage: stage,
+		Time:  time.Now(),
 	}
 
 	return nil
@@ -40,6 +43,7 @@ func stopped(_ Context, stage Stage, app App, out Out) error {
 	out.Output <- Output{
 		Data:  fmt.Sprintf("App installation stopped %s", app.Name()),
 		Stage: stage,
+		Time:  time.Now(),
 	}
 
 	return nil

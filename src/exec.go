@@ -193,6 +193,7 @@ func doneOutput(end time.Duration, stage Stage) Output {
 	return Output{
 		Data:  fmt.Sprintf("Done (%.3fs)", end.Seconds()),
 		Stage: stage,
+		Time:  time.Now(),
 	}
 }
 
@@ -200,5 +201,6 @@ func doneErrorOutput(err error, end time.Duration, stage Stage) Output {
 	return Output{
 		Data:  fmt.Sprintf("Error: %s (%.3fs)", err.Error(), end.Seconds()),
 		Stage: stage,
+		Time:  time.Now(),
 	}
 }

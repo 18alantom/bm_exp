@@ -176,7 +176,10 @@ This will create a `temp` folder:
 
 ## Time taken
 
-1. Empty cache, successfully built.
+### Concurrent
+
+<details>
+<summary>1. Empty cache. Wall time 470.710s. Time saved 465.883s.</summary>
 
 ```shell
 # bm --apps erpnext hrms drive builder
@@ -202,7 +205,10 @@ Total wall time       :  470.710s
 Time saved            :  465.883s
 ```
 
-2. Non empty cache, successfully built, network issue caused slowdown:
+</details>
+
+<details>
+<summary>2. Network issue. Bottlenecked by hrms. Wall time 324.544s. Time saved 92.5s.</summary>
 
 ```shell
 # bm --apps erpnext hrms drive builder
@@ -232,6 +238,70 @@ Time saved            :   92.500s
 # When installing JS dependencies for frappe/hrms
 info There appears to be trouble with your network connection. Retrying...
 ```
+
+</details>
+
+<details>
+<summary>3. Some (?) issue. Bottlenecked by hrms. Wall time 323.877. Time saved 88.727s.</summary>
+
+```shell
+# bm --apps erpnext hrms drive builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/drive     |    0.160s |    0.000s |   41.922s |   12.261s |    2.819s |   57.162s |
+| frappe/hrms      |    0.462s |    0.000s |  299.386s |    6.682s |    2.682s |  309.212s |
+| frappe/frappe    |    0.910s |    0.000s |    9.456s |    1.390s |    4.222s |   15.978s |
+| frappe/erpnext   |    1.172s |    0.000s |    0.188s |    0.000s |    2.808s |    4.168s |
+| frappe/builder   |    0.094s |    0.000s |   13.599s |    7.576s |    2.747s |   24.015s |
+
+Totals:
+Bench init            :    2.070s
+Concurrent app stages :  395.257s
+Sequential app stages :   15.277s
+---------------------------------
+Total app             :  410.535s
+Total app + bench     :  412.604s
+---------------------------------
+Total wall time       :  323.877s
+Time saved            :   88.727s
+```
+
+HRMS build stuck for ~5 minutes at the following line (line occurred previously in build too):
+
+```bash
+ warning Pattern ["wrap-ansi@^7.0.0"] is trying to unpack in the same destination "bm_poc/temp/bench/apps/hrms/frontend/temp/.cache/yarn/v6/npm-wrap-ansi-cjs-7.0.0-67e145cff510a6a6984bdf1152911d69d2eb9e43-integrity/node_modules/wrap-ansi-cjs" as pattern ["wrap-ansi-cjs@npm:wrap-ansi@^7.0.0"]. This could result in non-deterministic behavior, skipping.
+```
+
+</details>
+
+<details>
+<summary>4. No `hrms`. Wall time 60.820s. Time saved 27.850s.</summary>
+
+```bash
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/builder   |    0.079s |    0.000s |   10.129s |    7.852s |    2.712s |   20.772s |
+| frappe/drive     |    0.133s |    0.000s |   33.102s |   13.059s |    2.790s |   49.084s |
+| frappe/frappe    |    0.724s |    0.000s |    6.975s |    1.038s |    4.118s |   12.855s |
+| frappe/erpnext   |    0.914s |    0.000s |    0.141s |    0.000s |    2.813s |    3.868s |
+
+Totals:
+Bench init            :    2.091s
+Concurrent app stages :   74.145s
+Sequential app stages :   12.434s
+---------------------------------
+Total app             :   86.579s
+Total app + bench     :   88.671s
+---------------------------------
+Total wall time       :   60.820s
+Time saved            :   27.850s
+```
+
+</details>
 
 ## Glossary
 

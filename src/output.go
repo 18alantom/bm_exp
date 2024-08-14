@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 type ANSIColor = string
@@ -12,6 +13,7 @@ type ANSIColor = string
 type Output struct {
 	Data  string
 	Stage Stage
+	Time  time.Time
 }
 
 type Out struct {
@@ -83,11 +85,12 @@ func merge(outs []Out) {
 						continue
 					}
 
+					timeStamp := fmt.Sprintf("\x1b[2m%s\x1b[m", output.Time.Format("15:04:05.000"))
+					stage := fmt.Sprintf("%s%-26s\x1b[m", colorMap[output.Stage], output.Stage)
+					app := fmt.Sprintf("\x1b[33m%-16s\x1b[m", out.App)
 					mux <- fmt.Sprintf(
-						"%s%-26s\x1b[m \x1b[33m%-16s\x1b[m %s\r\n",
-						colorMap[output.Stage],
-						output.Stage,
-						out.App, data,
+						"%s %s %s %s\r\n",
+						timeStamp, stage, app, data,
 					)
 				}
 			case <-out.Done:
