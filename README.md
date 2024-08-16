@@ -175,12 +175,14 @@ This will create a `temp` folder:
 - `temp/bench`: dummy bench where the apps are installed.
 - `temp/.cache`: where the repos, `yarn` and `pip` cache are.
 
-## Time taken
+## Results
 
-### Concurrent
+Unless mentioned otherwise, the build times are based off of cached assets.
+
+### Concurrent: `erpnext [hrms] drive builder`
 
 <details>
-<summary>1. Empty cache. Wall time 470.710s. Time saved 465.883s.</summary>
+<summary>1. No cache. Wall time 470.710s. Time saved 465.883s.</summary>
 
 ```shell
 # bm --apps erpnext hrms drive builder
@@ -280,6 +282,8 @@ HRMS build stuck for ~5 minutes at the following line (line occurred previously 
 <details>
 <summary>4. No hrms. Wall time 60.820s. Time saved 27.850s.</summary>
 
+Hrms excluded here due to previous run issues.
+
 ```bash
 # bm --apps erpnext drive builder
 
@@ -305,7 +309,7 @@ Time saved            :   27.850s
 
 </details>
 
-### Sequential
+### Sequential: `erpnext [hrms] drive builder`
 
 <details>
 
@@ -315,13 +319,13 @@ Time saved            :   27.850s
 # bm --seq --apps erpnext hrms drive builder
 
 Time Breakdown:
-| org/repo         |     clone |  validate |    ins js |     build |    ins py |  complete |      stop |     total |
-|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-| frappe/frappe    |    4.957s |    0.000s |  222.984s |    0.796s |    4.241s |    0.000s |    0.000s |  232.977s |
-| frappe/erpnext   |    5.888s |    0.000s |    0.497s |    0.000s |    2.842s |    0.000s |    0.000s |    9.228s |
-| frappe/hrms      |    2.734s |    0.000s |  529.143s |    6.487s |    2.645s |    0.000s |    0.000s |  541.010s |
-| frappe/drive     |    3.023s |    0.000s |   30.326s |   12.125s |    2.734s |    0.000s |    0.000s |   48.208s |
-| frappe/builder   |    1.677s |    0.000s |  189.298s |    7.098s |    2.643s |    0.000s |    0.000s |  200.716s |
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/frappe    |    4.957s |    0.000s |  222.984s |    0.796s |    4.241s |  232.977s |
+| frappe/erpnext   |    5.888s |    0.000s |    0.497s |    0.000s |    2.842s |    9.228s |
+| frappe/hrms      |    2.734s |    0.000s |  529.143s |    6.487s |    2.645s |  541.010s |
+| frappe/drive     |    3.023s |    0.000s |   30.326s |   12.125s |    2.734s |   48.208s |
+| frappe/builder   |    1.677s |    0.000s |  189.298s |    7.098s |    2.643s |  200.716s |
 
 Totals:
 Bench init            :    2.578s
@@ -423,6 +427,103 @@ Time saved            :   -0.000s
 ```
 
 </details>
+
+### Concurrent: `erpnext gameplan crm builder`
+
+<details>
+<summary>1. No cache. Wall time 260.255s. Time saved 487.928s</summary>
+
+```bash
+# bm --apps erpnext gameplan crm builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/crm       |    3.070s |    0.000s |   83.196s |   15.218s |    4.953s |  106.437s |
+| frappe/frappe    |    4.751s |    0.000s |  234.221s |    0.737s |    4.552s |  244.262s |
+| frappe/erpnext   |    5.966s |    0.000s |    2.229s |    0.000s |    2.962s |   11.156s |
+| frappe/builder   |    1.175s |    0.000s |  167.492s |    7.001s |    2.850s |  178.519s |
+| frappe/gameplan  |    2.726s |    0.000s |  192.632s |    7.223s |    3.065s |  205.646s |
+
+Totals:
+Bench init            :    2.163s
+Concurrent app stages :  727.638s
+Sequential app stages :   18.382s
+---------------------------------
+Total app             :  746.020s
+Total app + bench     :  748.183s
+---------------------------------
+Total wall time       :  260.255s
+Time saved            :  487.928s
+```
+
+</details>
+
+<details>
+<summary>2. Wall time 140.657s. Time saved 54.068s.</summary>
+
+```bash
+# bm --apps erpnext gameplan crm builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/builder   |    0.092s |    0.000s |    9.712s |    7.662s |    2.745s |   20.211s |
+| frappe/gameplan  |    0.149s |    0.000s |  115.404s |    7.297s |    3.159s |  126.009s |
+| frappe/crm       |    0.188s |    0.000s |    9.451s |   16.060s |    2.867s |   28.566s |
+| frappe/frappe    |    0.654s |    0.000s |    7.800s |    1.323s |    3.952s |   13.728s |
+| frappe/erpnext   |    0.981s |    0.000s |    0.146s |    0.000s |    3.045s |    4.173s |
+
+Totals:
+Bench init            :    2.039s
+Concurrent app stages :  176.919s
+Sequential app stages :   15.768s
+---------------------------------
+Total app             :  192.687s
+Total app + bench     :  194.725s
+---------------------------------
+Total wall time       :  140.657s
+Time saved            :   54.068s
+```
+
+</details>
+
+<details>
+<summary>3. Wall time 300.568s. Time saved 51.725s.</summary>
+
+```bash
+# bm --apps erpnext gameplan crm builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |  complete |      stop |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/crm       |    0.180s |    0.000s |    8.308s |   15.658s |    2.804s |    0.000s |    0.000s |   26.950s |
+| frappe/frappe    |    0.676s |    0.000s |    8.028s |    0.973s |    4.290s |    0.000s |    0.000s |   13.966s |
+| frappe/erpnext   |    0.924s |    0.000s |    0.218s |    0.000s |    2.901s |    0.000s |    0.000s |    4.043s |
+| frappe/builder   |    0.093s |    0.000s |    9.471s |    7.196s |    2.861s |    0.000s |    0.000s |   19.622s |
+| frappe/gameplan  |    0.148s |    0.000s |  274.921s |    7.426s |    3.212s |    0.000s |    0.000s |  285.707s |
+
+Totals:
+Bench init            :    2.005s
+Concurrent app stages :  334.220s
+Sequential app stages :   16.068s
+---------------------------------
+Total app             :  350.287s
+Total app + bench     :  352.292s
+---------------------------------
+Total wall time       :  300.568s
+Time saved            :   51.725s
+```
+
+</details>
+
+## Issues
+
+These are a few issues faced that were affecting the install times.
+
+1. Network issues: Possible throttling by the package registry. No cache JS install has very high variance. Eg for `frappe`: 71s, 223s, 154s, etc.
+2. Dependency unpacking: faced by hrms possibly due to duplicated lock files and usage of workspaces.
+3. Yarn race conditions:
 
 ## Glossary
 
