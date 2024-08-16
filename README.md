@@ -3,7 +3,8 @@
 > [!IMPORTANT]
 >
 > This is proof of concept for the **Bench Maker**. At present, it does not
-> create a working bench, just verifies the ideas.
+> create a working bench, just verifies the ideas by running the time consuming
+> stages that make a bench.
 >
 > See the [POC](#poc) section.
 
@@ -208,7 +209,7 @@ Time saved            :  465.883s
 </details>
 
 <details>
-<summary>2. Network issue. Bottlenecked by hrms. Wall time 324.544s. Time saved 92.5s.</summary>
+<summary>2. Network issue (hrms). Wall time 324.544s. Time saved 92.5s.</summary>
 
 ```shell
 # bm --apps erpnext hrms drive builder
@@ -242,7 +243,7 @@ info There appears to be trouble with your network connection. Retrying...
 </details>
 
 <details>
-<summary>3. Some (?) issue. Bottlenecked by hrms. Wall time 323.877. Time saved 88.727s.</summary>
+<summary>3. Other issue (hrms). Wall time 323.877. Time saved 88.727s.</summary>
 
 ```shell
 # bm --apps erpnext hrms drive builder
@@ -277,9 +278,10 @@ HRMS build stuck for ~5 minutes at the following line (line occurred previously 
 </details>
 
 <details>
-<summary>4. No `hrms`. Wall time 60.820s. Time saved 27.850s.</summary>
+<summary>4. No hrms. Wall time 60.820s. Time saved 27.850s.</summary>
 
 ```bash
+# bm --apps erpnext drive builder
 
 Time Breakdown:
 | org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
@@ -299,6 +301,121 @@ Total app + bench     :   88.671s
 ---------------------------------
 Total wall time       :   60.820s
 Time saved            :   27.850s
+```
+
+</details>
+
+<details>
+
+### Sequential
+
+<summary>1. No cache. Wall time 1034.717s. Time saved 0s.</summary>
+
+```bash
+# bm --seq --apps erpnext hrms drive builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |  complete |      stop |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/frappe    |    4.957s |    0.000s |  222.984s |    0.796s |    4.241s |    0.000s |    0.000s |  232.977s |
+| frappe/erpnext   |    5.888s |    0.000s |    0.497s |    0.000s |    2.842s |    0.000s |    0.000s |    9.228s |
+| frappe/hrms      |    2.734s |    0.000s |  529.143s |    6.487s |    2.645s |    0.000s |    0.000s |  541.010s |
+| frappe/drive     |    3.023s |    0.000s |   30.326s |   12.125s |    2.734s |    0.000s |    0.000s |   48.208s |
+| frappe/builder   |    1.677s |    0.000s |  189.298s |    7.098s |    2.643s |    0.000s |    0.000s |  200.716s |
+
+Totals:
+Bench init            :    2.578s
+Concurrent app stages : 1017.035s
+Sequential app stages :   15.104s
+---------------------------------
+Total app             : 1032.139s
+Total app + bench     : 1034.717s
+---------------------------------
+Total wall time       : 1034.717s
+Time saved            :   -0.000s
+```
+
+</details>
+
+<summary>2. Wall time 268.063. Time saved 0s.</summary>
+
+```bash
+# bm --seq --apps erpnext hrms drive builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/builder   |    0.034s |    0.000s |    6.850s |    7.150s |    2.722s |   16.756s |
+| frappe/frappe    |    0.456s |    0.000s |    4.420s |    0.711s |    4.502s |   10.088s |
+| frappe/erpnext   |    0.656s |    0.000s |    0.130s |    0.000s |    2.968s |    3.754s |
+| frappe/hrms      |    0.233s |    0.000s |  177.555s |    6.661s |    2.733s |  187.181s |
+| frappe/drive     |    0.085s |    0.000s |   33.169s |   12.223s |    2.753s |   48.231s |
+
+Totals:
+Bench init            :    2.052s
+Concurrent app stages :  250.333s
+Sequential app stages :   15.677s
+---------------------------------
+Total app             :  266.010s
+Total app + bench     :  268.063s
+---------------------------------
+Total wall time       :  268.063s
+Time saved            :   -0.000s
+```
+
+</details>
+
+<details>
+<summary>3. No cache. No hrms. Wall time 427.232s. Time saved 0s.</summary>
+
+```bash
+# bm --seq --apps erpnext drive builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/frappe    |    3.267s |    0.000s |  154.176s |    0.749s |    3.905s |  162.097s |
+| frappe/erpnext   |    5.044s |    0.000s |    0.865s |    0.000s |    2.892s |    8.801s |
+| frappe/drive     |    1.925s |    0.000s |   28.502s |   12.367s |    2.717s |   45.511s |
+| frappe/builder   |    1.106s |    0.000s |  197.903s |    7.058s |    2.606s |  208.673s |
+
+Totals:
+Bench init            :    2.149s
+Concurrent app stages :  412.963s
+Sequential app stages :   12.120s
+---------------------------------
+Total app             :  425.083s
+Total app + bench     :  427.232s
+---------------------------------
+Total wall time       :  427.232s
+Time saved            :   -0.000s
+```
+
+</details>
+
+<summary>4. No hrms. Wall time 74.429s. Time saved 0s.</summary>
+
+```bash
+# bm --seq --apps erpnext drive builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/frappe    |    0.429s |    0.000s |    4.262s |    0.713s |    4.229s |    9.633s |
+| frappe/erpnext   |    0.588s |    0.000s |    0.130s |    0.000s |    2.855s |    3.573s |
+| frappe/drive     |    0.077s |    0.000s |   28.715s |   12.033s |    2.789s |   43.615s |
+| frappe/builder   |    0.038s |    0.000s |    5.756s |    7.132s |    2.696s |   15.622s |
+
+Totals:
+Bench init            :    1.985s
+Concurrent app stages :   59.874s
+Sequential app stages :   12.569s
+---------------------------------
+Total app             :   72.444s
+Total app + bench     :   74.429s
+---------------------------------
+Total wall time       :   74.429s
+Time saved            :   -0.000s
 ```
 
 </details>
