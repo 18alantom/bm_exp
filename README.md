@@ -1,14 +1,26 @@
 > [!IMPORTANT]
 >
-> This is proof of concept for the **Bench Maker**. At present, it does not
-> create a working bench, just verifies the ideas by running the time consuming
+> This is an experiment for the **Bench Maker** concept. At present, it does not
+> create a working bench. It just verifies the ideas by running the time consuming
 > stages that make a bench.
 >
-> See the [POC](#poc) section.
+> See the [Experiment](#experiment) section.
 
 <img width="800" alt="Screenshot 2024-08-16 at 12 07 45" src="https://github.com/user-attachments/assets/db2a71e3-ac6d-4b0a-92d5-904cd25b5a81">
 
-Bench Maker is a performant `bench` replacement. Specifically it is meant to replace the `bench init` and `bench get-app` commands.
+Bench Maker is to be a performant `bench init` + `bench get-app` replacement.
+
+**Index**:
+
+- [Why](#why)
+- [How](#how)
+- [Experiment](#experiment)
+- [How to run](#how-to-run)
+- [Results](#results)
+- [Issues](#issues)
+- [Thoughts](#thoughts)
+- [Next](#next)
+- [Glossary](#glossary)
 
 ## Why
 
@@ -18,7 +30,9 @@ involves running `bench get-app` sequentially for a selection of _Frappe Apps_.
 
 ## How
 
-The `bench init` and `bench get-app` command when utilized for more than one app, consist of mutually independent steps that can be run concurrently. This is better explained by use of a graph:
+The `bench init` and `bench get-app` command when utilized for more than one
+app, consist of mutually independent steps that can be run concurrently. This is
+better explained by use of a graph:
 
 ```mermaid
 ---
@@ -132,15 +146,18 @@ graph TD
 > Installing Python dependencies have to be run sequentially because all apps on
 > a _Frappe Bench_ share the same python environment.
 
-## POC
+## Experiment
 
-This is as of now a proof of concept. It may or may not be fleshed out. The
-ideas and implementations I wanted to test out and have been verified are:
+This is as of now an experiment. It may or may not be fleshed out. The ideas I
+wanted to test out were:
 
 - Concurrent installation of _Frappe Apps_ being possible.
 - Concurrent installation of _Frappe Apps_ taking much lesser time than sequential installation.
 - Multiplexing of output from concurrent installs.
 - Being able to cleanly stop execution if any app install fails.
+
+The above were tested out but the outcomes didn't have repeatability, check the
+[Issues](#issues) section for more info.
 
 Few things I have not yet tested out are:
 
@@ -150,7 +167,7 @@ Few things I have not yet tested out are:
 - Speed up from caching different stages. As of now only the fetch app stage is
   non optimally cached, other than that `yarn` and `pip` use their own caches.
 
-### Run
+## How to run
 
 > [!NOTE]
 >
@@ -495,13 +512,13 @@ Time saved            :   54.068s
 # bm --apps erpnext gameplan crm builder
 
 Time Breakdown:
-| org/repo         |     clone |  validate |    ins js |     build |    ins py |  complete |      stop |     total |
-|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-| frappe/crm       |    0.180s |    0.000s |    8.308s |   15.658s |    2.804s |    0.000s |    0.000s |   26.950s |
-| frappe/frappe    |    0.676s |    0.000s |    8.028s |    0.973s |    4.290s |    0.000s |    0.000s |   13.966s |
-| frappe/erpnext   |    0.924s |    0.000s |    0.218s |    0.000s |    2.901s |    0.000s |    0.000s |    4.043s |
-| frappe/builder   |    0.093s |    0.000s |    9.471s |    7.196s |    2.861s |    0.000s |    0.000s |   19.622s |
-| frappe/gameplan  |    0.148s |    0.000s |  274.921s |    7.426s |    3.212s |    0.000s |    0.000s |  285.707s |
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/crm       |    0.180s |    0.000s |    8.308s |   15.658s |    2.804s |   26.950s |
+| frappe/frappe    |    0.676s |    0.000s |    8.028s |    0.973s |    4.290s |   13.966s |
+| frappe/erpnext   |    0.924s |    0.000s |    0.218s |    0.000s |    2.901s |    4.043s |
+| frappe/builder   |    0.093s |    0.000s |    9.471s |    7.196s |    2.861s |   19.622s |
+| frappe/gameplan  |    0.148s |    0.000s |  274.921s |    7.426s |    3.212s |  285.707s |
 
 Totals:
 Bench init            :    2.005s
@@ -517,18 +534,171 @@ Time saved            :   51.725s
 
 </details>
 
+### Sequential: `erpnext gameplan crm builder`
+
+<details>
+<summary>2. Wall time 730.036s. Time saved 0s.</summary>
+
+```bash
+# bm --seq --apps erpnext gameplan crm builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |  complete |      stop |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/builder   |    1.128s |    0.000s |  211.175s |    7.126s |    2.757s |    0.000s |    0.000s |  222.186s |
+| frappe/frappe    |    3.318s |    0.000s |   80.472s |    0.828s |    4.349s |    0.000s |    0.000s |   88.967s |
+| frappe/erpnext   |    5.178s |    0.000s |    0.505s |    0.000s |    2.862s |    0.000s |    0.000s |    8.546s |
+| frappe/gameplan  |    1.745s |    0.000s |  126.566s |    7.375s |    3.034s |    0.000s |    0.000s |  138.719s |
+| frappe/crm       |    2.712s |    0.000s |  248.975s |   15.165s |    2.760s |    0.000s |    0.000s |  269.612s |
+
+Totals:
+Bench init            :    2.006s
+Concurrent app stages :  712.267s
+Sequential app stages :   15.762s
+---------------------------------
+Total app             :  728.029s
+Total app + bench     :  730.035s
+---------------------------------
+Total wall time       :  730.036s
+Time saved            :   -0.000s
+```
+
+</details>
+
+<details>
+<summary>2. Wall time 249.152s. Time saved 0s.</summary>
+
+```bash
+# bm --seq --apps erpnext gameplan crm builder
+
+Time Breakdown:
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/frappe    |    0.510s |    0.000s |    5.111s |    0.741s |    4.335s |   10.697s |
+| frappe/erpnext   |    0.791s |    0.000s |    0.131s |    0.000s |    3.004s |    3.927s |
+| frappe/gameplan  |    0.084s |    0.000s |  181.568s |    7.430s |    3.097s |  192.179s |
+| frappe/crm       |    0.107s |    0.000s |    5.631s |   15.221s |    2.740s |   23.699s |
+| frappe/builder   |    0.036s |    0.000s |    6.294s |    7.461s |    2.734s |   16.525s |
+
+Totals:
+Bench init            :    2.125s
+Concurrent app stages :  231.115s
+Sequential app stages :   15.912s
+---------------------------------
+Total app             :  247.026s
+Total app + bench     :  249.151s
+---------------------------------
+Total wall time       :  249.152s
+Time saved            :   -0.000s
+```
+
+</details>
+
 ## Issues
 
 These are a few issues faced that were affecting the install times.
 
-1. Network issues: Possible throttling by the package registry. No cache JS install has very high variance. Eg for `frappe`: 71s, 223s, 154s, etc.
-2. Dependency unpacking: faced by hrms possibly due to duplicated lock files and usage of workspaces.
-3. Yarn race conditions:
+### Multiple `package.json`
+
+This is an issue because the inner `package.json` install script is run by the
+outer `package.json`. In some cases the package manager used is not the same
+([eg](https://github.com/frappe/drive/blob/d3710510f0150b37a618f088b6d9779412797fea/package.json#L4)].
+
+This precludes consistent caching behavior.
+
+### Network issues
+
+Possible throttling by the package registry. No cache JS install has very high
+variance. Eg for `frappe`: 71s, 223s, 154s, etc.
+
+### Yarn install race conditions
+
+This manifests as corrupted cache tars which fail to unpack, with the following message:
+
+```bash
+error https://registry.yarnpkg.com/feather-icons/-/feather-icons-4.29.1.tgz:
+Extracting tar content of undefined failed, the file appears to be corrupt:
+"ENOENT: no such file or directory, chmod 'temp/.cache/yarn/v6/npm-feather-icons-4.29.1-f222aaa4cc6fca499356660c9de6c009ee2cb117-integrity/node_modules/feather-icons/dist/icons/toggle-right.svg'"
+```
+
+**Observation**: It's increasingly observed as the number of apps being install go up. In the
+above example the feather-icons dependency is used by several apps and fetching
+or caching it probably causes a race condition.
+
+**Issue**: https://github.com/yarnpkg/yarn/issues/7212
+
+### Duplicate dependency unpacking
+
+This manifests as time taken to install a dependency, with the following message:
+
+```bash
+warning Pattern ["wrap-ansi@^7.0.0"] is trying to unpack in the same destination "temp/.cache/yarn/v6/npm-wrap-ansi-cjs-7.0.0-67e145cff510a6a6984bdf1152911d69d2eb9e43-integrity/node_modules/wrap-ansi-cjs" as pattern ["wrap-ansi-cjs@npm:wrap-ansi@^7.0.0"]. This could result in non-deterministic behavior, skipping
+```
+
+**Observation**: observed only on hrms (both sequential and concurrent installs),
+probably due to the above sub-dependency being present in multiple lock files (
+[1](https://github.com/frappe/hrms/blob/74c41436aba402523c611106b437aa63754ddad0/frontend/yarn.lock#L2641),
+[2](https://github.com/frappe/hrms/blob/74c41436aba402523c611106b437aa63754ddad0/yarn.lock#L2636)).
+Considering the amount of hold up after this line (hundreds of seconds), this occurs for other packages too.
+
+**Issue**: https://github.com/yarnpkg/yarn/issues/7087
+
+From the issue it appears that this too is a race condition.
+
+## Thoughts
+
+Going into this I'd thought running app install concurrently would suffice. This
+turned out to not be the case and I learned a strong lesson:
+
+> It doesn't matter how wonderfully concurrent your implementation is if the code
+> being called doesn't support concurrency.
+
+In this case it was `yarn installs`. While yarn uses file locking, it evidently
+isn't done to the extent of handling concurrency.
+
+That being said, yarn classic as of now appears to be on life-support (1.9k
+issues and last serious change was years ago
+[ref](https://github.com/yarnpkg/yarn/commits/master/)). Perhaps it's time to
+move onto a different package manager?
+
+I'm unsure of whether other package mangers would support the level of
+concurrency required. This I'd find out only through more experimentation.
+
+That being said, there are probably race conditions or just throttling taking
+place when fetching from the npm Registry. A way to circumvent this would be to
+have local mirrors and being able to run offline builds
+([ref](https://classic.yarnpkg.com/blog/2016/11/24/offline-mirror/)).
+
+## Next
+
+Another couple of ideas I'd like to try out are:
+
+**1. Pre building**: pre-building an app or a _Frappe Bench_ when an app updates.
+This is a sort of greedy approach that doesn't wait for a deploy to be
+scheduled.
+
+The issue with this is, the way a regular Frappe App is laid out is a asinine,
+it expects to be present inside a _Frappe Bench_ when being build. Besides this
+it also often has the double `package.json` setup. So the calling code doesn't
+have control over how the dependencies are actually installed because they are
+installed by the postinstall script of the outer
+[`package.json`](https://github.com/frappe/gameplan/blob/46b196bed1690c5da0135ae43df7d7c824453d6f/package.json#L5).
+All courtesy of Gameplan, the badly thought-out layout of which has been copied
+over by several other _Frappe Apps_.
+
+
+**2. Bench maker caching**: the idea here is to not have separate `bench get-app`
+commands but a single one. This would allow cache to be maintained entirely by
+Bench Maker itself without dependence on Docker caching.
+
+This would prevent the ordering of apps from causing duplicate work due to layer
+cache hash change. I.e. all caching under `bench init` + `bench get-app` is
+handled outside of a docker build.
 
 ## Glossary
 
-A glossary has been included cause due to asinine naming, the term "bench" is
-terribly overloaded. In the context of FC, it refers to at least 4 different
+A glossary has been included cause due to daft and lazy naming, the term "bench"
+is terribly overloaded. In the context of FC, it refers to at least 4 different
 things.
 
 - **_Frappe Bench_**: A collection of _Frappe Apps_ managed by `bench`.
