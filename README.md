@@ -537,7 +537,7 @@ Time saved            :   51.725s
 ### Sequential: `erpnext gameplan crm builder`
 
 <details>
-<summary>2. Wall time 730.036s. Time saved 0s.</summary>
+<summary>1. No cache. Wall time 730.036s. Time saved 0s.</summary>
 
 ```bash
 # bm --seq --apps erpnext gameplan crm builder
