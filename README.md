@@ -305,9 +305,9 @@ Time saved            :   27.850s
 
 </details>
 
-<details>
-
 ### Sequential
+
+<details>
 
 <summary>1. No cache. Wall time 1034.717s. Time saved 0s.</summary>
 
@@ -336,6 +336,8 @@ Time saved            :   -0.000s
 ```
 
 </details>
+
+<details>
 
 <summary>2. Wall time 268.063. Time saved 0s.</summary>
 
@@ -392,6 +394,8 @@ Time saved            :   -0.000s
 ```
 
 </details>
+
+<details>
 
 <summary>4. No hrms. Wall time 74.429s. Time saved 0s.</summary>
 
