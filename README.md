@@ -1,5 +1,3 @@
-# Bench Maker
-
 > [!IMPORTANT]
 >
 > This is proof of concept for the **Bench Maker**. At present, it does not
@@ -7,6 +5,8 @@
 > stages that make a bench.
 >
 > See the [POC](#poc) section.
+
+<img width="800" alt="Screenshot 2024-08-16 at 12 07 45" src="https://github.com/user-attachments/assets/db2a71e3-ac6d-4b0a-92d5-904cd25b5a81">
 
 Bench Maker is a performant `bench` replacement. Specifically it is meant to replace the `bench init` and `bench get-app` commands.
 
