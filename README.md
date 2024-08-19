@@ -24,9 +24,9 @@ Bench Maker is to be a performant `bench init` + `bench get-app` replacement.
 
 ## Why
 
-The main purpose of this is to be used by _Frappe Cloud_ to speed up builds.
+The main purpose of this is to be used by Frappe Cloud to speed up builds.
 Majority of the time spent in a build is spent in the App Install stages which
-involves running `bench get-app` sequentially for a selection of _Frappe Apps_.
+involves running `bench get-app` sequentially for a selection of Frappe Apps.
 
 ## How
 
@@ -141,31 +141,25 @@ graph TD
 
 4 out of the 5 app stages involved in making a bench can be run concurrently.
 
-> [!NOTE]
->
-> Installing Python dependencies have to be run sequentially because all apps on
-> a _Frappe Bench_ share the same python environment.
+The remaining stage—installing Python dependencies—have to be run sequentially
+because all apps on a _Frappe Bench_ share the same Python environment.
 
 ## Experiment
 
-This is as of now an experiment. It may or may not be fleshed out. The ideas I
-wanted to test out were:
+This is an experiment because I wanted to first verify a handful of ideas around
+concurrency w.r.t app installs:
 
-- Concurrent installation of _Frappe Apps_ being possible.
-- Concurrent installation of _Frappe Apps_ taking much lesser time than sequential installation.
-- Multiplexing of output from concurrent installs.
-- Being able to cleanly stop execution if any app install fails.
+- [x] Concurrent installation of Frappe Apps being possible.
+- [x] Concurrent installation of Frappe Apps taking much lesser time than sequential installation.
+- [x] Multiplexing of output from concurrent installs.
+- [x] Being able to cleanly stop execution if any app install fails.
+- [ ] Multiple instances of bench maker running separately.
+- [ ] Using alternative package managers (`uv`, `pnpm`, `bun`, etc).
+- [ ] Using app level cache managed by Bench Maker.
 
-The above were tested out but the outcomes didn't have repeatability, check the
-[Issues](#issues) section for more info.
-
-Few things I have not yet tested out are:
-
-- Building a working bench using bench maker
-- Performance impact of multiple instances of bench maker running separately.
-- Speed up from using alternative package managers than `yarn` or `pip`.
-- Speed up from caching different stages. As of now only the fetch app stage is
-  non optimally cached, other than that `yarn` and `pip` use their own caches.
+The ones above that were tested out worked, but they did lacked repeatability
+and did not work under all input cases. Check the [Issues](#issues) section for
+more info.
 
 ## How to run
 
@@ -180,11 +174,11 @@ go build
 # Example
 ./bm --apps erpnext hrms gameplan builder
 
-# Example without cache
-./bm --no-cache --apps erpnext hrms gameplan builder
-
 # Example sequential install
 ./bm --seq --apps erpnext hrms gameplan builder
+
+# Rerun without bench and cache deletion overhead (use for No cache)
+rm -rf ./temp && ./bm --seq --apps erpnext hrms gameplan builder
 ```
 
 This will create a `temp` folder:
@@ -543,13 +537,13 @@ Time saved            :   51.725s
 # bm --seq --apps erpnext gameplan crm builder
 
 Time Breakdown:
-| org/repo         |     clone |  validate |    ins js |     build |    ins py |  complete |      stop |     total |
-|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-| frappe/builder   |    1.128s |    0.000s |  211.175s |    7.126s |    2.757s |    0.000s |    0.000s |  222.186s |
-| frappe/frappe    |    3.318s |    0.000s |   80.472s |    0.828s |    4.349s |    0.000s |    0.000s |   88.967s |
-| frappe/erpnext   |    5.178s |    0.000s |    0.505s |    0.000s |    2.862s |    0.000s |    0.000s |    8.546s |
-| frappe/gameplan  |    1.745s |    0.000s |  126.566s |    7.375s |    3.034s |    0.000s |    0.000s |  138.719s |
-| frappe/crm       |    2.712s |    0.000s |  248.975s |   15.165s |    2.760s |    0.000s |    0.000s |  269.612s |
+| org/repo         |     clone |  validate |    ins js |     build |    ins py |     total |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| frappe/builder   |    1.128s |    0.000s |  211.175s |    7.126s |    2.757s |  222.186s |
+| frappe/frappe    |    3.318s |    0.000s |   80.472s |    0.828s |    4.349s |   88.967s |
+| frappe/erpnext   |    5.178s |    0.000s |    0.505s |    0.000s |    2.862s |    8.546s |
+| frappe/gameplan  |    1.745s |    0.000s |  126.566s |    7.375s |    3.034s |  138.719s |
+| frappe/crm       |    2.712s |    0.000s |  248.975s |   15.165s |    2.760s |  269.612s |
 
 Totals:
 Bench init            :    2.006s
@@ -596,7 +590,7 @@ Time saved            :   -0.000s
 
 ## Issues
 
-These are a few issues faced that were affecting the install times.
+Issues faced that affected repeatability of this experiment.
 
 ### Multiple `package.json`
 
@@ -608,8 +602,8 @@ This precludes consistent caching behavior.
 
 ### Network issues
 
-Possible throttling by the package registry. No cache JS install has very high
-variance. Eg for `frappe`: 71s, 223s, 154s, etc.
+Possible throttling by the package registry. The observed effect is `yarn install`
+time (no cache) has very high variance. Eg for `frappe`: 71s, 223s, 154s, etc.
 
 ### Yarn install race conditions
 
@@ -621,11 +615,10 @@ Extracting tar content of undefined failed, the file appears to be corrupt:
 "ENOENT: no such file or directory, chmod 'temp/.cache/yarn/v6/npm-feather-icons-4.29.1-f222aaa4cc6fca499356660c9de6c009ee2cb117-integrity/node_modules/feather-icons/dist/icons/toggle-right.svg'"
 ```
 
-**Observation**: It's increasingly observed as the number of apps being install go up. In the
-above example the feather-icons dependency is used by several apps and fetching
-or caching it probably causes a race condition.
-
-**Issue**: https://github.com/yarnpkg/yarn/issues/7212
+- **Observation**: It's increasingly observed as the number of apps being install go up. In the
+  above example the feather-icons dependency is used by several apps and fetching
+  or caching it probably causes a race condition.
+- **Issue**: https://github.com/yarnpkg/yarn/issues/7212
 
 ### Duplicate dependency unpacking
 
@@ -635,13 +628,12 @@ This manifests as time taken to install a dependency, with the following message
 warning Pattern ["wrap-ansi@^7.0.0"] is trying to unpack in the same destination "temp/.cache/yarn/v6/npm-wrap-ansi-cjs-7.0.0-67e145cff510a6a6984bdf1152911d69d2eb9e43-integrity/node_modules/wrap-ansi-cjs" as pattern ["wrap-ansi-cjs@npm:wrap-ansi@^7.0.0"]. This could result in non-deterministic behavior, skipping
 ```
 
-**Observation**: observed only on hrms (both sequential and concurrent installs),
-probably due to the above sub-dependency being present in multiple lock files (
-[1](https://github.com/frappe/hrms/blob/74c41436aba402523c611106b437aa63754ddad0/frontend/yarn.lock#L2641),
-[2](https://github.com/frappe/hrms/blob/74c41436aba402523c611106b437aa63754ddad0/yarn.lock#L2636)).
-Considering the amount of hold up after this line (hundreds of seconds), this occurs for other packages too.
-
-**Issue**: https://github.com/yarnpkg/yarn/issues/7087
+- **Observation**: observed only on hrms (both sequential and concurrent installs),
+  probably due to the above sub-dependency being present in multiple lock files (
+  [1](https://github.com/frappe/hrms/blob/74c41436aba402523c611106b437aa63754ddad0/frontend/yarn.lock#L2641),
+  [2](https://github.com/frappe/hrms/blob/74c41436aba402523c611106b437aa63754ddad0/yarn.lock#L2636)).
+  Considering the amount of hold up after this line (hundreds of seconds), this occurs for other packages too.
+- **Issue**: https://github.com/yarnpkg/yarn/issues/7087
 
 From the issue it appears that this too is a race condition.
 
@@ -650,24 +642,34 @@ From the issue it appears that this too is a race condition.
 Going into this I'd thought running app install concurrently would suffice. This
 turned out to not be the case and I learned a strong lesson:
 
-> It doesn't matter how wonderfully concurrent your implementation is if the code
-> being called doesn't support concurrency.
+> It does not matter how wonderfully concurrent your implementation is if the code
+> your implementation is running concurrently does not support it.
 
 In this case it was `yarn installs`. While yarn uses file locking, it evidently
-isn't done to the extent of handling concurrency.
+isn't done well enough to the extent of handling concurrency required by this
+experiment.
 
-That being said, yarn classic as of now appears to be on life-support (1.9k
-issues and last serious change was years ago
-[ref](https://github.com/yarnpkg/yarn/commits/master/)). Perhaps it's time to
-move onto a different package manager?
+> **Aside: moving on from Yarn**
+>
+> Yarn classic as of now appears to be on life-support (1.9k
+> open Issues and last serious change was years ago
+> ([ref](https://github.com/yarnpkg/yarn/commits/master/)). Perhaps it's time to
+> move onto a different package manager.
 
 I'm unsure of whether other package mangers would support the level of
 concurrency required. This I'd find out only through more experimentation.
 
-That being said, there are probably race conditions or just throttling taking
-place when fetching from the npm Registry. A way to circumvent this would be to
-have local mirrors and being able to run offline builds
+Package manager aside, there are probably race conditions or just throttling
+taking place when fetching from the npm Registry. A way to circumvent this would
+be to have local mirrors and being able to run offline builds
 ([ref](https://classic.yarnpkg.com/blog/2016/11/24/offline-mirror/)).
+
+Even though the current experiment failed to meet expectations, I think there is
+still value in having all apps installed via a single command and to not have
+them installed sequentially by `bench get-app` calls in the Dockerfile. This
+allows installation of apps such that cached apps can be used irrespective of
+sequence. A change in previous layer hash will not require all cache be thrown
+away.
 
 ## Next
 
@@ -677,34 +679,36 @@ Another couple of ideas I'd like to try out are:
 This is a sort of greedy approach that doesn't wait for a deploy to be
 scheduled.
 
-The issue with this is, the way a regular Frappe App is laid out is a asinine,
-it expects to be present inside a _Frappe Bench_ when being build. Besides this
-it also often has the double `package.json` setup. So the calling code doesn't
-have control over how the dependencies are actually installed because they are
-installed by the postinstall script of the outer
-[`package.json`](https://github.com/frappe/gameplan/blob/46b196bed1690c5da0135ae43df7d7c824453d6f/package.json#L5).
-All courtesy of Gameplan, the badly thought-out layout of which has been copied
-over by several other _Frappe Apps_.
+> **Aside: issue with Frappe App layouts**
+>
+> The difficulty faced here is because the way a regular Frappe App is laid out
+> is a asinine, it expects to be present inside a _Frappe Bench_ when the
+> frontend is being built so that it can import the site config file during
+> build (without a fallback).
+> 
+> Besides this it often has a double `package.json` setup. So, Bench Maker doesn't
+> have control over how the dependencies are actually installed because they are
+> installed by the `postinstall` script of the outer
+> [`package.json`](https://github.com/frappe/gameplan/blob/46b196bed1690c5da0135ae43df7d7c824453d6f/package.json#L5).
+> 
+> All courtesy of Gameplan, the badly thought-out layout of which has been
+> copied several times over by several other Frappe Apps (to be fair, these
+> weren't requirements when being installed by `bench`, so what worked, worked;
+> nevertheless, bad design is bad design.
 
-
-**2. Bench maker caching**: the idea here is to not have separate `bench get-app`
-commands but a single one. This would allow cache to be maintained entirely by
-Bench Maker itself without dependence on Docker caching.
-
-This would prevent the ordering of apps from causing duplicate work due to layer
-cache hash change. I.e. all caching under `bench init` + `bench get-app` is
-handled outside of a docker build.
+**2. Cache rotation**: The main issue faced in this experiment stems from the
+cache being shared between several `yarn install` calls. Having separate caches
+per app should solve this. Cache here will be used only by one app at a time,
+but will be reused across multiple Bench Maker calls. Cache file locking will be
+handled by Bench Maker itself as opposed to yarn or other package managers.
 
 ## Glossary
 
 A glossary has been included cause due to daft and lazy naming, the term "bench"
-is terribly overloaded. In the context of FC, it refers to at least 4 different
+is terribly overloaded. In the context of Frappe Cloud, it refers to at least 4 different
 things.
 
-- **_Frappe Bench_**: A collection of _Frappe Apps_ managed by `bench`.
+- **_Frappe Bench_**: A collection of Frappe Apps managed by `bench`.
 - **`bench`**: [Tool](https://github.com/frappe/bench) used to manage _Frappe Benches_.
-- **_Frappe App_**: A web-app built using FF.
-- **_Frappe Cloud_**: [Platform](https://frappecloud.com/) that hosts _Frappe Benches_.
-- **BM**: Bench Maker.
-- **FF**: [Frappe Framework](https://github.com/frappe/frappe).
-- **FC**: Frappe Cloud.
+- **Frappe App**: A web-app built using the [Frappe Framework](https://github.com/frappe/frappe).
+- **Frappe Cloud**: [Platform](https://frappecloud.com/) that hosts _Frappe Benches_.
